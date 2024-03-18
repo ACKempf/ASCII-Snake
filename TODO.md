@@ -19,11 +19,11 @@
 - [ ] Implement game over detection to end the game when Tetriminos reach the top of the grid.
 - [ ] Implement scoring mechanism based on cleared rows(?).
 - [ ] Implement level progression(?)
-- [ ] Implement statistics screen (shows the amount of times each tetrimino has been placed on the grid during the game)
+- [ ] Implement statistics screen to show the amount of times each tetrimino has been placed on the grid during the game(?).
 
 ### 4. Miscellaneous
 - [ ] Add settings menu with options (expand on this later).
 - [ ] Add color (Background and tetromino)
 - [ ] Add music(?)
 - [ ] Implement file to log and save high scores(?)
-- [ ] Add support for Windows
+- [ ] Add support for Windows(?)
