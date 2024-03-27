@@ -1,9 +1,18 @@
 ## TO-DO List
 
 ### 1. Create a library with macOS-Specific Functions
-- [ ] Set up a separate library project for macOS-specific functions.
-- [ ] Implement basic functions (ex. terminal screen clearing, cursor movement? keyboard input handling?).
+- [x] Set up a separate library project for macOS-specific functions.
+- [ ] Implement private method for changing data in display "character" array.
+- [ ] Implement private method for generating a formatted "character" with ANSI sequences.
+- [ ] Implement public method for collecting format preferences and placing appropriate string in array.
+- [ ] Implement color formatting.
+- [ ] Implement private method of clearing screen.
+- [ ] Change the draw() method to clear the screen prior to drawing the display table.
+- [ ] Implement cursor visibility options.
+- [ ] Implement user input system.
 - [ ] Test the library functions on macOS to ensure compatibility and functionality.
+
+*NOTE: I place "character" in quotes because the type of the elements in the array are string, but the class should be structured in such a way that those strings only actually print 1 character to console, the string is used to contain the ANSI escape sequences and the single character to be printed*
 
 ### 2. Develop Game Mechanics
 - [ ] Implement Tetris grid.
