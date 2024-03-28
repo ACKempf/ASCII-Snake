@@ -1,6 +1,6 @@
 /*
 * File: TControl.hpp
-* Date: 03/26/2024
+* Date: 03/28/2024
 *
 * Description:
 * Header file contains any terminal related functionality that would be OS
@@ -9,14 +9,12 @@
 * without having to rewrite any existing code in the main program.
 */
 
-//Redundancy safety check, only compiles if TCONTROL_H isnt defined, TCONTROL_H only defined when if check passed
+//Redundancy safety check
 #ifndef TCONTROL_H
 #define TCONTROL_H
 
-//#ifdef will only compile what is within it if the object is defined
-//Below is a link to pre-defined OS specific macros
+//Below is a link to pre-defined OS specific macros for conditional compilation
 //https://sourceforge.net/p/predef/wiki/OperatingSystems/
-//With this we can deduce what operating system is compiling the file
 
 //_WIN32 is defined for both 32 and 64 bit
 #ifdef _WIN32
@@ -30,58 +28,94 @@
   #include <vector>
   #include <string>
 
-  //A shorthand constant for the ANSII escape code
+  //A shorthand constant for the ANSI escape code on terminal
   const std::string ESC = "\033[";
 
+  /*
+  The terminal class represents a 2D grid of characters, Each character in the grid is able to be formatted (color, bold, underlined, etc...)
+  and can be positioned with standard 2D coordinates. This allows a program to carefully control a rectangular space in console of a given size. 
+  The size of this area is constant after initialization.
+  */
   class Terminal
   {
-    //Class Constructor
-    //Inputs the size of the terminal as r (rows) & c (columns), initializes the rows and columns constants
-    //Initializes the vector and populated it with ' ' characters
+    /*
+    Constructor for the class, as of now only initializes constants and display grid with given row and column size.
+
+    Params: 2 integer
+    int, r: The amount of rows of the display area
+    int, c: The amount of columns in the display area
+    */
     public: Terminal(int r, int c) : rows(r), columns(c), char_grid(r, std::vector<std::string>(c, " ")){};
 
     private:
 
-      //TODO: Test functionality through setChar() method
-      //Sets the element at a given row to the given string
-      //Inputs 2 integers and 1 string
-      //Integers representing the row and column to be set
-      //String representing the data to be placed at that place
+      /*
+      Sets an element at a certain row and column of the display table to a given string parameter.
+
+      Params: 2 integer, 1 string
+      int, row: The row to place the character (0-indexed)
+      int, column: The column to place the character (0-indexed)
+      string, to_set: The value the specified element will be set to
+
+      Returns: void
+      */
       void setElement(int row, int column, std::string to_set)
       {
          char_grid[row][column] = to_set;
          return;
       }
 
-      //TODO: Test functionality through setChar() method
-      //Clears the console screen of any printed characters
-      //Outputs the ANSI clear code to console and the code to return the cursor to the home position
-      void clear() {std::cout << (ESC + "2J" + ESC + "H");}
+      /*
+      Clears the screen of all contents by moving the terminal display down x rows with newline characters
 
-      //TODO: Test functionality, private function can only be accessed through setChar() method
-      //Generated a string that when printed to console, presents one character with desired formatting options
-      //Inputs 1 char, 4 boolean values, 2 integer 
-      //Char is the char to be printed.
-      //Bools are various formatting options (bold, italic, underline, blinking)
-      //Integers, foreground color and background color respectively. Refer to 8-bit color table, populated with default black and white colors
-      //TODO: Because of how i plan on implementing the reset between characters, it would be best to implement color directly in here rather than a seperate function
+      Params: None
+
+      Returns: Void
+      */
+      void clear() 
+      {
+        //Print the ANSI codes to clear screen and home the cursor
+        //NOTE:This doesnt erase any characters, it only newlines the exact amount needed to hide the previous state of terminal
+        std::cout << (ESC + "2J" + ESC + "H");
+        return;
+      }
+
+      /*
+      Takes a given character and applied a format to it using ANSI escape sequences
+
+      Params: 1 char, 4 bool, 2 int
+      char, chr: The character to be formatted
+      bool, bold: Emboldens the character
+      bool, italic: Italicizes the character
+      bool, underline: Underlines the character
+      bool, blink: Makes the character blink (cursor blink behavior)
+      int, fg_color: Sets the color of the character itself (0-255 color)
+      int, bg_color: Sets the color of the background of the cell containing the character (0-255 color)
+
+      Returns: A string containing all relevant ANSI codes and the character to be printed
+      */
       std::string generateFormatChar(char chr, bool bold=false, bool italic=false, bool underline=false, bool blink=false, int fg_color=231, int bg_color=232)
       {
+        //string used to store all ANSI codes and character to return
         std::string formatted = "";
 
-        //If statement used to append format data to characters
+        //If statements check if format options are true then appends correct ANSI code
         if (bold) formatted+=(ESC+"1m");
         if (italic) formatted+=(ESC+"3m");
         if (underline) formatted+=(ESC+"4m");
         if (blink) formatted+=(ESC+"5m");
 
-        //Color data has proper default values so is implemented regardless of its values
+        //Color data has proper default values so is appended regardless of its values
         //ESC38;5;{ID}m following this ANSI code
         formatted+=(ESC+"38;5;" + std::to_string(fg_color) + "m");
         //ESC48;5;{ID}m
-        formatted+=(ESC+"48:5:" + std::to_string(bg_color) + "m");
+        formatted+=(ESC+"48;5;" + std::to_string(bg_color) + "m");
+
+        //Append the character that is being formatted
+        formatted+=chr;
 
         //"0m" resets all attributes, color included
+        //This prevents characters in the array from inheriting formats from the previous
         formatted+=(ESC+"0m");
 
         return formatted;
@@ -94,64 +128,101 @@
       //Boolean storing visibility status of cursor
       bool cursor_visibility = true;
 
+      
+
       //Display vector
-      //Indexed as [row][column] OR [X][Y]
+      //Indexed as [row][column] OR [X][Y] (0-indexed)
       std::vector<std::vector<std::string>> char_grid;
 
     public:
 
-      //Getters for row and column constants
+      /*
+      Get respective private values (in function name)
+
+      Params: None
+
+      Returns: Integer of respective value
+      */
       int getRows() const {return rows;}
       int getColumns() const {return columns;}
 
-      //TODO: Test screen clear functionality in draw method
-      //Draws the contents of the display array to the screen
+      /*
+      Prints all characters stored in the display table to console
+
+      Params: None
+
+      Returns: Void
+      */
       void draw() 
       {
-        //Clear the console beforehand
-        clear();
-        //Nested range-based for loops, outer to iterate rows, inner to iterate individual characters in rows
-        //NOTE: ch is not a character type, but the way "characters" are added to the array, other parts of the string are ANSI escape sequences
-        //So the element should always print to console exactly 1 character that is formatted
+        //To help prevent flickering the contents of the table are appended to a single continuous string
+        std::string pre_print = "";
+
+        //range-based for-loops iterate through horizontal rows first and vertical columns second.
+        //ch is the object found at the current position being iterated through on the table
         for (std::vector<std::string> column:char_grid) {
           for (std::string ch:column) {
-            std::cout << ch;
+            //Append the character to the pre_print string
+            pre_print += ch;
           }
-          //newline for row seperation
-          std::cout << "\n";
+          //Append newline to the pre_print string to seperate rows
+          pre_print += "\n";
         }
+
+        //Clear the terminal and print the pre_print string.
+        clear();
+        std::cout << pre_print;
 
         return;
       };
 
-      //TODO: Test functionality
-      //Changed the visibility of the cursor
-      //Inputs 1 boolean value, true will display cursor, false will hide cursor
-      void setCursorVisibility(bool to_set) {
-        //Do not do anything if the cursor visibility is the same as what is requested 
+      /*
+      Changes the visibility status of the cursor (blinking vs not appearing at all)
+
+      Params: 1 bool
+      bool, to_set: True to show the cursor, False to display the cursor
+
+      Returns: Void
+      */
+      void setCursorVisibility(bool to_set) 
+      {
+        //Checks if cursor_visibility is different from what the user requests
         if (to_set != cursor_visibility){
-          //We know that what is requested is the opposite of the current value
-          //So if cursor visibiltiy it currently true, mae it invisible and change value
+          //Checks if cursor visibility is true, changes cursor visiblity and sets cursor_visibility to false
           if (cursor_visibility) {
+            //ANSI escape to hide the cursor
             std::cout << ESC+"?25l";
             cursor_visibility = false;
             return;
           } else {
+            //ANSI escape to show the cursor
             std::cout << ESC+"?25h";
             cursor_visibility = true;
             return;
           }
         }
+        return;
       }
 
-      //TODO: Test function, Implement any safety features
-      //inputs 4 integers, 1 char, and 4 boolean parameters
-      //4 integers are row to place, column to place, foreground color, and background color respectively
-      //char is the single character to be formatted and placed in display array
-      //4 boolean values are format values, bold, italic, underline, and blinking respectively
+      /*
+      Sets a specific character at a certain row and column of the display table to the given character, with format options.
+
+      Params:1 char, 4 int, 4 bool
+      int, row: The row to place the character
+      int, column: The column to place the character
+      char, chr: The character to be printed to console with supplied format options
+      bool, bold: Emboldens the character
+      bool, italic: Italicizes the character
+      bool, underline: Underlines the character
+      bool, blink: Makes the character blink (cursor blink behavior)
+      int, fg_color: Sets the color of the character itself (0-255 color)
+      int, bg_color: Sets the color of the background of the cell containing the character (0-255 color)
+
+      Returns: Void
+      */
       void setChar(int row, int column, char chr, bool bold=false, bool italic=false, bool underline=false, bool blink=false, int fg_color=231, int bg_color=232)
       {
-        //Fairly simple functionality, just a public wrapper of 2 private methods
+        //Fairly simple functionality, Just uses the correct private method to perform the task
         setElement(row, column, generateFormatChar(chr, bold, italic, underline, blink, fg_color, bg_color));
         return;
       }
