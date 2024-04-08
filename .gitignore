@@ -3,5 +3,4 @@ test.cpp
 test.dSYM/Contents/Info.plist
 test.dSYM/Contents/Resources/Relocations/aarch64/test.yml
 .DS_Store
-.vscode/c_cpp_properties.json
-.vscode/tasks.json
+.vscode/*
