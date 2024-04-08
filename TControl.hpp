@@ -27,9 +27,36 @@
   #include <tuple>
   #include <vector>
   #include <string>
+  #include <termios.h>
 
   //A shorthand constant for the ANSI escape code on terminal
   const std::string ESC = "\033[";
+  
+  /*
+  Enables raw mode in terminal, disabling echo and line-by-line reading mode (canonical)
+  also enables non_blocking input
+
+  Params: None
+
+  Returns: Void
+  */
+  void enableRawMode()
+  {
+    struct termios raw_mode;
+    //Get attribute sturct from current terminal and store in raw_mode struct
+    tcgetattr(STDIN_FILENO, &raw_mode);
+
+    //Disable the canonical mode and echo mode flags
+    //Using bitwise operators, bitwise & operator is true if flag&specified bit is true.
+    //By setting ~ to ECHO, it flips the bit if ECHO is on, thus disabling it
+    //Same applied to canonical mode
+    raw_mode.c_lflag &= ~(ECHO | ICANON);
+
+    //Apply changes made to struct immediately
+    tcsetattr(STDIN_FILENO, TCSANOW, &raw_mode);
+
+    return;
+  }
 
   /*
   The terminal class represents a 2D grid of characters, Each character in the grid is able to be formatted (color, bold, underlined, etc...)
@@ -77,6 +104,7 @@
         //Print the ANSI codes to clear screen and home the cursor
         //NOTE:This doesnt erase any characters, it only newlines the exact amount needed to hide the previous state of terminal
         std::cout << (ESC + "2J" + ESC + "H");
+        std::cout.flush();
         return;
       }
 
@@ -172,7 +200,7 @@
         //Clear the terminal and print the pre_print string.
         clear();
         std::cout << pre_print;
-
+        std::cout.flush();
         return;
       };
 
