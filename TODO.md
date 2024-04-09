@@ -9,9 +9,9 @@
 - [x] Implement private method of clearing screen.
 - [x] Change the draw() method to clear the screen prior to drawing the display table.
 - [x] Implement cursor visibility options.
-- [ ] Implement method for changing whether echo is enabled.
-- [ ] Implement function for retrieving the size of the console window.
-- [ ] Implement a seperate class for handling user-input.
+- [x] Implement method for changing whether echo is enabled.
+- [x] Implement function for retrieving the size of the console window.
+- [ ] Implement a way to have non-blocking input
 - [ ] Test the library functions on macOS to ensure compatibility and functionality.
 
 *NOTE: I place "character" in quotes because the type of the elements in the array are string, but the class should be structured in such a way that those strings only actually print 1 character to console, the string is used to contain the ANSI escape sequences and the single character to be printed*
