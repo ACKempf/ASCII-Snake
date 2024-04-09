@@ -27,11 +27,30 @@
   #include <tuple>
   #include <vector>
   #include <string>
+  //Used for changing console input/output mode (enableRawMode function)
   #include <termios.h>
+  //Used for retrieving the size of the console window
+  #include <sys/ioctl.h>
 
   //A shorthand constant for the ANSI escape code on terminal
   const std::string ESC = "\033[";
-  
+
+  /*
+  Returns a pair type that contains the width and height of the console window currently (respectively)
+
+  Params: None
+
+  Returns: A pair (width, height)
+  */
+  std::pair<int, int> getTermSize()
+  {
+    struct winsize sizes;
+    //ioctl takes STDOUT_FILENO, TIOCGWINSZ as an argument tells it to collect window sizes, window sizes are saved to the winsize struct
+    ioctl(STDOUT_FILENO, TIOCGWINSZ, &sizes);
+
+    return std::pair<int, int>(sizes.ws_row, sizes.ws_col);
+  }
+
   /*
   Enables raw mode in terminal, disabling echo and line-by-line reading mode (canonical)
   also enables non_blocking input
