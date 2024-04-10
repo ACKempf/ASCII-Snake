@@ -27,6 +27,7 @@
   #include <tuple>
   #include <vector>
   #include <string>
+  #include <stdexcept>
   //Used for changing console input/output mode (enableRawMode function)
   #include <termios.h>
   //Used for retrieving the size of the console window
@@ -150,7 +151,7 @@
       {
         //Print the ANSI codes to clear screen and home the cursor
         //NOTE:This doesnt erase any characters, it only newlines the exact amount needed to hide the previous state of terminal
-        std::cout << (ESC + "2J" + ESC + "H");
+        std::cout << (ESC + "H");
         std::cout.flush();
         return;
       }
@@ -211,7 +212,7 @@
 
     public:
 
-      /*
+      /*w
       Get respective private values (in function name)
 
       Params: None
@@ -297,8 +298,14 @@
       */
       void setChar(int row, int column, char chr, bool bold=false, bool italic=false, bool underline=false, bool blink=false, int fg_color=231, int bg_color=232)
       {
-        //Fairly simple functionality, Just uses the correct private method to perform the task
-        setElement(row, column, generateFormatChar(chr, bold, italic, underline, blink, fg_color, bg_color));
+        //Some error handling code to make it easier to diagnose later
+        if (0 <= row && row < rows && 0 <= column && column < columns){
+          //Fairly simple functionality, Just uses the correct private method to perform the task
+          setElement(row, column, generateFormatChar(chr, bold, italic, underline, blink, fg_color, bg_color));
+        } else {
+          std::cerr << "Attempted to set character @ (" << row << ", " << column << ")" << std::endl;
+          throw std::out_of_range("Attempted to set value outside of display grid.");
+        }
         return;
       }
   };
