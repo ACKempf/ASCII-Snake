@@ -212,7 +212,7 @@
 
     public:
 
-      /*w
+      /*
       Get respective private values (in function name)
 
       Params: None
