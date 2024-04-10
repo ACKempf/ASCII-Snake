@@ -4,3 +4,6 @@ test.dSYM/Contents/Info.plist
 test.dSYM/Contents/Resources/Relocations/aarch64/test.yml
 .DS_Store
 .vscode/*
+main
+main.dSYM/Contents/Info.plist
+main.dSYM/Contents/Resources/Relocations/aarch64/main.yml
