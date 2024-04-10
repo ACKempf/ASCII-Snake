@@ -31,6 +31,8 @@
   #include <termios.h>
   //Used for retrieving the size of the console window
   #include <sys/ioctl.h>
+  //Used for non-blocking input
+  #include <poll.h>
 
   //A shorthand constant for the ANSI escape code on terminal
   const std::string ESC = "\033[";
@@ -49,6 +51,32 @@
     ioctl(STDOUT_FILENO, TIOCGWINSZ, &sizes);
 
     return std::pair<int, int>(sizes.ws_row, sizes.ws_col);
+  }
+
+  /*
+  Returns the last (unread) character pressed, and the null character if no character has been pressed
+
+  Params: None
+
+  Returns: A character, the last (unread) character pressed
+  */
+  char getInput()
+  {
+    //Structure that contains the file descriptors to monitor for available input
+    struct pollfd fds[1];
+
+    //Tell it which file descriptor, and what to monitor, POLLIN means to look for available input
+    fds[0].fd = STDIN_FILENO;
+    fds[0].events = POLLIN;
+
+    //Initialize the last pressed character with the null character
+    unsigned char last_chr = 0;
+
+    //As long as there is available input, exhaustively collect input until there is no new input to be read
+    while (poll(fds, 1, 0)) std::cin >> last_chr;
+
+    //Return the last character read before none was available
+    return last_chr;
   }
 
   /*
