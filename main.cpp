@@ -62,10 +62,6 @@ class for active game grid here
 
 int main()
 {
-  struct tetrominoCoords t;
-  t.rot_state = 4;
-  t.get();
-
   //Enable raw mode
   enableRawMode();
 
