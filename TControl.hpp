@@ -319,8 +319,8 @@
       void clearGrid()
       {
         //Iterate through all character slots and set them to whitespace
-        for (vector<string> r:char_grid) {
-          for (string ch:r) {
+        for (std::vector<std::string> r:char_grid) {
+          for (std::string ch:r) {
             ch = " ";
           }
         }
