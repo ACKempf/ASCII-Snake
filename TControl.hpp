@@ -308,6 +308,25 @@
         }
         return;
       }
+
+      /*
+      Clears the display grid to be blank
+
+      Params: None
+
+      Returns: Void
+      */
+      void clearGrid()
+      {
+        //Iterate through all character slots and set them to whitespace
+        for (vector<string> r:char_grid) {
+          for (string ch:r) {
+            ch = " ";
+          }
+        }
+
+        return;
+      }
   };
 
 #endif
