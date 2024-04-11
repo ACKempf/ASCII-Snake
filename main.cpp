@@ -1,6 +1,7 @@
 #include <iostream>
 #include <vector>
 #include <unistd.h>
+#include <exception>
 #include "TControl.hpp"
 
 using namespace std;
@@ -17,14 +18,38 @@ struct tetrominoCoords {
   vector<pair<int, int>> rot180;
   vector<pair<int, int>> rot270;
 
+  //The current rotation state, 0-3, where 3 is 3*90 or 270 degrees
+  int rot_state = 0;
+
   //Advance the current state clockwise (+90 degrees)
-  void rotateCWise();
+  void rotateCWise()
+  {
+    rot_state = (++rot_state)%4;
+    return;
+  };
 
   //Advance the current state counter-clockwise (-90 degrees)
-  void rotateCCWise();
+  void rotateCCWise()
+  {
+    rot_state = (--rot_state)%4;
+    return;
+  };
 
   //Returns the current rotation coordinates of the coordinates
-  void get();
+  vector<pair<int, int>> get() {
+    switch (rot_state) {
+      case 0:
+        return rot0;
+      case 1:
+        return rot90;
+      case 2:
+        return rot180;
+      case 3:
+        return rot270;
+      default:
+        throw invalid_argument("Invalid rotation state.");
+    }
+  }
 };
 
 /*
@@ -37,6 +62,10 @@ class for active game grid here
 
 int main()
 {
+  struct tetrominoCoords t;
+  t.rot_state = 4;
+  t.get();
+
   //Enable raw mode
   enableRawMode();
 
@@ -55,5 +84,5 @@ int main()
   /*
   game menu loop here
   */
- 
+
 }
