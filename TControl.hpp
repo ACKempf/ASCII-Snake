@@ -81,6 +81,22 @@
   }
 
   /*
+  A duplicate of the clear method for the Terminal class, Allows clearing the screen outside of a class instance
+
+  Params: None
+
+  Returns: Void
+  */
+  void clear() 
+      {
+        //Print the ANSI codes to clear screen and home the cursor
+        //NOTE:This doesnt erase any characters, it only newlines the exact amount needed to hide the previous state of terminal
+        std::cout << (ESC + "2J" + ESC + "H");
+        std::cout.flush();
+        return;
+      }
+
+  /*
   Enables raw mode in terminal, disabling echo and line-by-line reading mode (canonical)
   also enables non_blocking input
 
@@ -310,6 +326,23 @@
       }
 
       /*
+      Returns the center of the display as a pair
+      Will be innacurate if the number of rows and columns is odd and there is no true center
+
+      Params: None
+
+      Returns: A pair containing the row and columb of the center
+      */
+      std::pair<int, int> findCenter(){
+        std::pair<int, int> to_return;
+        to_return.first = rows/2;
+        to_return.second = columns/2;
+
+        return to_return;
+      }
+
+
+      /*
       Clears the display grid to be blank
 
       Params: None
@@ -319,8 +352,8 @@
       void clearGrid()
       {
         //Iterate through all character slots and set them to whitespace
-        for (vector<string> r:char_grid) {
-          for (string ch:r) {
+        for (std::vector<std::string> r:char_grid) {
+          for (std::string ch:r) {
             ch = " ";
           }
         }
