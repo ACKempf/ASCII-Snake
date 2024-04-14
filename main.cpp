@@ -31,6 +31,8 @@ int CURSOR_FG_COLOR = 220;
 int CURSOR_BG_COLOR = 232;
 char CURSOR_UP = 'w';
 char CURSOR_DOWN = 's';
+
+//Pseudo-constants for menu
 int SNAKE_BODY_COLOR = 230;
 int SNAKE_HEAD_COLOR = 230;
 int SNAKE_HEAD_BG = 230;
@@ -195,6 +197,12 @@ class Menu
     
 
 };
+
+//Creates a menu to gather user input for settings purposes, prints a prompt
+void intInputMenu(string text, Terminal& t, int& to_set);
+void boolInputMenu(string text, Terminal& t, bool& to_set);
+void charInputMenu(string text, Terminal& t, char& to_set);
+void settingsMenu(Terminal &t);
 
 /*
     Snake Class:
@@ -416,6 +424,7 @@ int main()
   menu_text[0] = cursor_control_line;
   Menu m(menu_text, menu_options, t);
 
+  while(true){
   //Signals the menu to run once regardless of whether there is input available
   bool init_run = true;
   int user_decision;
@@ -460,11 +469,12 @@ int main()
     playGame(snake, t, screen_size);
     break;
   case 2:
-    cout << "Options";
+    settingsMenu(t);
     break;
   case 3:
     exit(0);
     break;
+  }
   }
 }
 
@@ -666,5 +676,221 @@ void playGame(Snake &snake, Terminal &t, ipair screen_size)
 
     // Sleep to control the speed of the game
     usleep(GAME_SPEED);
+  }
+}
+
+void intInputMenu(string text, Terminal& t, int& to_set)
+{
+  vector<string> ts = {text, "where the currently displayed number goes"};
+  vector<string> ps = {"PRESS ENTER TO CONFIRM (C TO CANCEL)"};
+  string current_value = "";
+
+  bool active = true;
+  bool init = true;
+  while(active)
+  {
+    
+    //Initially populates the screen
+    if (init) 
+    {
+      ts[1] = "Current Value: " + current_value;
+      Menu m(ts, ps, t);
+      m.updateTerminal();
+      t.draw();
+      //Keep this specific block from running
+      init=false;
+    }
+
+    char input = getInput();
+    if (input>='0' && input<='9') 
+    {
+      current_value += input;
+      ts[1] = "Current Value: " + current_value;
+      Menu m(ts, ps, t);
+      m.updateTerminal();
+      t.draw();
+    }
+    switch (input) 
+    {
+      case '\n':
+        to_set = stoi(current_value);
+        t.clearGrid();
+        return;
+      case 'c':
+        t.clearGrid();
+        return;
+    }
+  }
+}
+
+void boolInputMenu(string text, Terminal& t, bool& to_set)
+{
+  //Menu printouts
+  vector<string> ts = {text};
+  vector<string> ps = {"TRUE", "FALSE"};
+  //Initiate menu
+  Menu m(ts, ps, t);
+  
+  //Flags for while loop
+  bool active = true;
+  bool force_menu = true;
+  while(active)
+  {
+    //Force menu to print, this clears the screen so only the menu shows up properly
+    if (force_menu) {
+      m.updateTerminal();
+      t.draw();
+      force_menu = false;
+    }
+    //Switch for moving cursor around based on input
+    switch (getInput())
+    {
+      case 'w':
+        m.moveCursor(-1);
+        m.updateTerminal();
+        t.draw();
+        break;
+      case 's':
+        m.moveCursor(1);
+        m.updateTerminal();
+        t.draw();
+        break;
+      //If enter is pressed, grab input and change value accordingly
+      case '\n':
+        switch(m.getSelection())
+        {
+          case 1:
+            to_set=true;
+            return;
+          case 2:
+            to_set=false;
+            return;
+        }
+    }
+  }   
+}
+
+void charInputMenu(string text, Terminal& t, char& to_set)
+{
+  vector<string> ts = {text, "where the currently displayed number goes"};
+  vector<string> ps = {"PRESS ENTER TO CONFIRM (C TO CANCEL)"};
+  char current_value;
+
+  bool active = true;
+  bool init = true;
+  while(active)
+  {
+    
+    //Initially populates the screen
+    if (init) 
+    {
+      ts[1] = "Current Value: " + string(1, current_value);
+      Menu m(ts, ps, t);
+      m.updateTerminal();
+      t.draw();
+      //Keep this specific block from running
+      init=false;
+    }
+
+    char input = getInput();
+    if (input != '\n' &&  input != 0) 
+    {
+
+      current_value = input;
+      ts[1] = "Current Value: " + string(1, current_value);
+      Menu m(ts, ps, t);
+      m.updateTerminal();
+      t.draw();
+    }
+    switch (input) 
+    {
+      case '\n':
+        to_set = current_value;
+        t.clearGrid();
+        return;
+      case 'c':
+        t.clearGrid();
+        return;
+    }
+  }
+}
+
+void settingsMenu(Terminal &t)
+{
+  bool force_menu = true;
+  bool active = true;
+  vector<string> menu_text = {"NAVIGATE MENU WITH W&S", "PRESS ENTER TO SELECT, C TO RETURN TO MAIN MENU"};
+  vector<string> menu_options = {"MENU_OPTION_BG_COLOR", "MENU_TEXT_BG_COLOR", "CURSOR_CHAR", "CURSOR_BG_COLOR",
+  "CURSOR_FG_COLOR", "SNAKE_HEAD_BG", "SNAKE_BODY_BG", "FOOD_COLOR", "FOOD_CHAR", "SNAKE_HEAD_UP", "SNAKE_HEAD_DOWN", 
+  "SNAKE_HEAD_LEFT", "SNAKE_HEAD_RIGHT"};
+  Menu m(menu_text, menu_options, t);
+
+  while(active)
+  {
+    if (force_menu) 
+    {
+      m.updateTerminal();
+      t.draw();
+    }
+    
+    switch (getInput()) {
+      case 'w':
+        m.moveCursor(-1);
+        m.updateTerminal();
+        t.draw();
+        break;
+      case 's':
+        m.moveCursor(1);
+        m.updateTerminal();
+        t.draw();
+        break;
+      case 'c':
+        return;
+      case '\n':
+        //Nested switch statement for when a selection is chosen in the above menu
+        //Prompts a menu to change the selected individual value
+        switch(m.getSelection())
+        {
+          case 1:
+            intInputMenu("ENTER ANSI COLOR CODE", t, MENU_OPTION_BG_COLOR);
+            break;
+          case 2:
+            intInputMenu("ENTER ANSI COLOR CODE", t, MENU_TEXT_BG_COLOR);
+            break;
+          case 3:
+            charInputMenu("ENTER A CHARACTER", t, CURSOR_CHAR);
+            break;
+          case 4:
+            intInputMenu("ENTER ANSI COLOR CODE", t, CURSOR_BG_COLOR);
+            break;
+          case 5:
+            intInputMenu("ENTER ANSI COLOR CODE", t, CURSOR_FG_COLOR);
+            break;
+          case 6:
+            intInputMenu("ENTER ANSI COLOR CODE", t, SNAKE_HEAD_BG);
+            break;
+          case 7:
+            intInputMenu("ENTER ANSI COLOR CODE", t, SNAKE_BODY_BG);
+            break;
+          case 8:
+            intInputMenu("ENTER ANSI COLOR CODE", t, FOOD_COLOR);
+            break;
+          case 9:
+            charInputMenu("ENTER FOOD CHARACTER", t, FOOD_CHAR);
+            break;
+          case 10:
+            charInputMenu("ENTER SNAKE HEAD UP", t, SNAKE_HEAD_UP);
+            break;
+          case 11:
+            charInputMenu("ENTER SNAKE HEAD DOWN", t, SNAKE_HEAD_DOWN);
+            break;
+          case 12:
+            charInputMenu("ENTER SNAKE HEAD LEFT", t, SNAKE_HEAD_LEFT);
+            break;
+          case 13:
+            charInputMenu("ENTER SNAKE HEAD RIGHT", t, SNAKE_HEAD_RIGHT);
+            break;
+        }
+    }
   }
 }
