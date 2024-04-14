@@ -34,6 +34,14 @@ char SNAKE_HEAD_DOWN = 'v';
 char SNAKE_HEAD_RIGHT = '>';
 char SNAKE_HEAD_LEFT = '<';
 int GAME_SPEED = 70000;
+
+/*
+    Snake Class:
+    This class represents a snake in a 2D grid-based game. The snake can move in four directions: up, down, left, and right. 
+    It grows by adding segments to its body when it consumes food. The class provides functions to control 
+    the snake's movement, change its direction, retrieve its body segments, and make it grow.
+*/
+
 class Snake {
 private:
     pvector body; // Vector to store the coordinates of the snake's body segments
@@ -155,6 +163,12 @@ void createGrid(ipair screensize);
 bool checkBoundaryCollision(const Snake& snake, ipair screensize);
 bool checkSelfCollision(const Snake& snake);
 
+/*
+    Food Struct:
+    represents the food in the snake game. It has a position defined by row and column coordinates. 
+    The spawn method randomly places the food within the grid boundaries. The checkCollision method is used to determine if the 
+    food collides with the snake by comparing its position with the positions of the snake's body segments.
+*/
 struct Food {
     int row=-1;
     int col=-1;
@@ -298,6 +312,13 @@ void createGrid(ipair screen_size, Terminal &t)
     
     t.draw();
 }
+/*
+    drawSnake Function:
+    This function is responsible for drawing the snake on a terminal screen. It takes the snake object and a terminal object as parameters. 
+    It iterates through the snake's body segments, drawing each segment using a specified character for the body.
+    It also draws the head of the snake according to its direction, using different characters for each direction. 
+    The function erases the previous position of the snake's tail segment and then draws the updated grid with the snake.
+*/
 void drawSnake(const Snake& snake, Terminal& t) {
     // Get the body of the snake
     const pvector& body = snake.getBody();
@@ -342,6 +363,15 @@ void drawSnake(const Snake& snake, Terminal& t) {
     t.draw();
 }
 
+/*
+    checkSelfCollision Function:
+    This function checks for self-collision of the snake, meaning if the snake's head collides with any 
+    part of its body. It takes the snake object as a parameter. It iterates through the snake's body 
+    segments starting from the second segment and compares their coordinates with the head's coordinates.
+    If a match is found, indicating a collision, it returns true. Otherwise, it returns false, indicating 
+    no collision.
+*/
+
 bool checkSelfCollision(const Snake& snake) {
     // Get the body of the snake
     const pvector& body = snake.getBody();
@@ -361,6 +391,15 @@ bool checkSelfCollision(const Snake& snake) {
     return false;
 }
 
+/*
+    checkBoundaryCollision Function:
+    This function checks for boundary collision of the snake, meaning if the snake's head moves beyond 
+    the boundaries of the game screen. It takes the snake object and the screen size as parameters. 
+    It retrieves the coordinates of the snake's head and calculates the boundary based on the screen size. 
+    It then checks if the head's coordinates exceed the boundaries. If a collision is detected, it returns 
+    true; otherwise, it returns false, indicating no collision.
+*/
+
 bool checkBoundaryCollision(const Snake& snake, ipair screen_size) {
   // Get the coordinates of the head
   ipair head = snake.getBody().front();
@@ -372,6 +411,7 @@ bool checkBoundaryCollision(const Snake& snake, ipair screen_size) {
     // No collision detected
     return false;
 }
+
 void playGame(Snake &snake, Terminal &t, ipair screen_size) {
     // Initialize random seed
     srand(time(NULL));
