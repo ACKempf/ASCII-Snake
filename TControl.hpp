@@ -24,7 +24,6 @@
 //Defined by G++ and clang when compiling on an apple system
 #elif __APPLE__
   #include <iostream>
-  #include <tuple>
   #include <vector>
   #include <string>
   #include <stdexcept>
