@@ -50,7 +50,9 @@ class Menu
     Moves the cursor by a given offset, positive advances the cursor, negative does otherwise
 
     Params: 1 integer
-    int, offset: 
+    int, offset: The amount to offset the cursor by
+
+    Returns: Void
     */
     void moveCursor(int offset)
     {
@@ -59,77 +61,110 @@ class Menu
       return;
     };
 
-    //Public method for updating terminal screen
+    /*
+    Updates the data inside of the Terminal array to reflect the current menu
+
+    Params: None
+
+    Returns: Void
+    */
     void updateTerminal() 
     {
       pushToTerminal();
       return;
     }
 
-    //Getter for the current selection, this is how the users selection is actually handled
+    /*
+    Returns the current cursor selection (Corresponds to a certain option on the menu)
+    Note: Because the order of the options is always first to last, if the order isnt changed, the cursor value for that option will not change
+
+    Params: None
+
+    Returns: An int representing the current position of the cursor
+    */
     int getSelection() {return cursor_position;}
 
 
   private:
-    //Terminal reference for modifying terminal
+    //Terminal reference used by the Menu class to modify an active Terminal instance
     Terminal& t;
-    //Constants of the Menu class
+    //Constant list of menu header text and option lines
     const vector<string> menu_options;
     const vector<string> menu_text;
+    //A constant with the coordinates of the current center point
     const ipair center;
+    //The horizontal distance between the cursor and the first letter of an option
     const int cursor_column_offset = 2;
-    //The amount of new lines between the menu text messages and the selectable options
+    //The amount of new lines between last header line and first option line
     const int text_option_seperation = 1;
-    //The starting position for printing the first character, and the row offset where the 
+    //The column coordinates where left justified text begins printing
     const int left_justification_column;
-    //Cursor members
-    int cursor_position = 1;
+    //The maximum position the cursor can occupy
     const int max_cursor_position;
+    //The current position of the cursor
+    int cursor_position = 1;
 
-    //Pushed the data to the center of the terminal (DOES NOT DRAW)
+    /*
+    Exports the current state of the menu display to the active Terminal class display grid
+    note: Does not draw the current terminal state, .draw() must be called after this method is called
+
+    Params: None
+
+    Returns: Void
+    */
     void pushToTerminal(){
+      //Zero out display grid to build menu display
       t.clearGrid();
-      //The row to which the first text line is printed
-      //Vertically centered
+      //The row to begin printing the first header line at
+      //Expression ensures this is vertically centered
       int current_row = center.first-((menu_options.size()+menu_text.size())/2)-text_option_seperation;
+      //For loop iterating over individual character of each string in menu_text
       for (string s:menu_text) {
+        //Current offset used to ensure characters are printed to the right of previous
         int current_column_offset=0;
         for (char c:s) {
           //Set current character with MENU_TEXT constant style
           t.setChar(current_row, left_justification_column+current_column_offset, c, MENU_TEXT_BOLD, MENU_TEXT_ITALIC, MENU_TEXT_UNDERLINE, MENU_TEXT_BLINK, MENU_TEXT_FG_COLOR, MENU_TEXT_BG_COLOR);
-          //Advance the column to the left
+          //Advance the column to the right
           current_column_offset++;
         }
-        //move down one row between given text lines
+        //Moves down to the next row before printing next line
         current_row++;
       }
-      //move down certain amount of rows
+
+      //Adds blank space between last header line and first option line
       current_row += text_option_seperation;
 
-      //used to track cursor position
+      //Used to compare current cursor position to line being printed
       int selection_cursor_index = 1;
 
       for (string s:menu_options) {
         int current_column_offset=0;
         for (char c:s) {
-          //Set current character with MENU_OPTION constant style
+          //MENU_OPTION style
           t.setChar(current_row, left_justification_column+current_column_offset, c, MENU_OPTION_BOLD, MENU_OPTION_ITALIC, MENU_OPTION_UNDERLINE, MENU_OPTION_BLINK, MENU_OPTION_FG_COLOR, MENU_OPTION_BG_COLOR);
-          //Advance the column to the left
           current_column_offset++;
         }
-
+        //Adds visual cursor if current line cursor position matches active cursor position
         if (selection_cursor_index == cursor_position) t.setChar(current_row, left_justification_column-cursor_column_offset, CURSOR_CHAR, CURSOR_BOLD, CURSOR_ITALIC, CURSOR_UNDERLINE, CURSOR_BLINK, CURSOR_FG_COLOR, CURSOR_BG_COLOR);
 
         current_row++;
+        //Advances the cursor position representation of the current option
         selection_cursor_index++;
       }
       return;
     }
 
-    //Just gets the longest string length between menu_text and menu_options
-    int getLongestStringLength()
+    /*
+    Returns the size of the longest string between the menu_options and menu_text vectors
+
+    Params: None
+
+    Returns: An integer representing the largest amount of characters in the longest string
+    */    
+   int getLongestStringLength()
     {
-      //string length
+      //current longest string length
       int s_l=0;
       //Longest from menu_options
       for (string s:menu_options) {
