@@ -21,11 +21,12 @@ ASCII snake requires nothing other than a MACOS system with access to the termin
 ASCII snake (when compiled) is an entirely portable executable file, depending on no external or non-standard libraries or files, and can be ran from anywhere on a MACOS system.
 
 ## Acknowledgements
-###The following library documentation was used in the creation of this project
-https://cplusplus.com/reference/stdexcept/
-https://cplusplus.com/reference/exception/
-https://pubs.opengroup.org/onlinepubs/7908799/xsh/termios.h.html
-https://pubs.opengroup.org/onlinepubs/009604599/functions/ioctl.html
-https://pubs.opengroup.org/onlinepubs/7908799/xsh/poll.h.html
-###The following github was referenced for ANSI escape codes
-https://gist.github.com/fnky/458719343aabd01cfb17a3a4f7296797
+The following library documentation was used in the creation of this project:
+- Standard Exceptions: [https://cplusplus.com/reference/stdexcept/](https://cplusplus.com/reference/stdexcept/)
+- Exception Handling: [https://cplusplus.com/reference/exception/](https://cplusplus.com/reference/exception/)
+- Termios Library Documentation: [https://pubs.opengroup.org/onlinepubs/7908799/xsh/termios.h.html](https://pubs.opengroup.org/onlinepubs/7908799/xsh/termios.h.html)
+- IOCTL Function Documentation: [https://pubs.opengroup.org/onlinepubs/009604599/functions/ioctl.html](https://pubs.opengroup.org/onlinepubs/009604599/functions/ioctl.html)
+- Poll System Call Documentation: [https://pubs.opengroup.org/onlinepubs/7908799/xsh/poll.h.html](https://pubs.opengroup.org/onlinepubs/7908799/xsh/poll.h.html)
+
+The following GitHub repository was referenced for ANSI escape codes:
+- ANSI Escape Codes: [https://gist.github.com/fnky/458719343aabd01cfb17a3a4f7296797](https://gist.github.com/fnky/458719343aabd01cfb17a3a4f7296797)
