@@ -1016,14 +1016,59 @@ void charEditorMenu(Terminal &t)
   }
 }
 
-void gameplayEditorMenu(Terminal &t);
+void gameplayEditorMenu(Terminal &t)
+{
+  bool force_menu = true;
+  bool active = true;
+  vector<string> menu_text = {"GAMEPLAY EDITOR", "NAVIGATE UP & DOWN WITH 'w' & 's'", "PRESS ENTER TO SELECT AN OPTION TO EDIT & C TO CANCEL"};
+  vector<string> menu_options = {"INITIAL GAME SPEED", "FOOD SPEED INCREMENT", "SELF COLLISION"};
+  Menu m(menu_text, menu_options, t);
+
+  while(active)
+  {
+    if (force_menu) 
+    {
+      m.updateTerminal();
+      t.draw();
+    }
+    
+    switch (getInput()) {
+      case 'w':
+        m.moveCursor(-1);
+        m.updateTerminal();
+        t.draw();
+        break;
+      case 's':
+        m.moveCursor(1);
+        m.updateTerminal();
+        t.draw();
+        break;
+      case 'c':
+        return;
+      case '\n':
+        //Nested switch statement for when a selection is chosen in the above menu
+        //Prompts a menu to change the selected individual value
+        switch(m.getSelection())
+        {
+          case 1:
+            intInputMenu("INITIAL GAME SPEED IN MICROSECONDS/FRAME", t, INITIAL_SPEED);
+            break;
+          case 2:
+            intInputMenu("CHANGE IN FRAME SPEED AFTER COLLECTING FOOD IN MICROSECONDS/FRAME", t, SPEED_INCREMENT);
+            break;
+          case 3:
+            boolInputMenu("ENABLE OR DISABLE SELF COLLISION", t, SELF_COLLISION);
+        }
+    }
+  }
+}
 
 void settingsEditorMenu(Terminal &t)
 {
   bool force_menu = true;
   bool active = true;
   vector<string> menu_text = {"SETTINGS EDITOR", "NAVIGATE UP & DOWN WITH 'w' & 's'", "PRESS ENTER TO SELECT AN OPTION TO EDIT & C TO CANCEL"};
-  vector<string> menu_options = {"STYLE EDITOR", "CHAR EDITOR"};
+  vector<string> menu_options = {"STYLE EDITOR", "CHAR EDITOR", "GAMEPLAY EDITOR"};
   Menu m(menu_text, menu_options, t);
 
   while(active)
@@ -1057,6 +1102,9 @@ void settingsEditorMenu(Terminal &t)
             break;
           case 2:
             charEditorMenu(t);
+            break;
+          case 3:
+            gameplayEditorMenu(t);
             break;
         }
     }
