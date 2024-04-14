@@ -27,6 +27,9 @@ int MAX_SPEED = 200;
 int SPEED_MULTIPLIER = 90;
 bool SELF_COLLISION = true;
 
+//Pseudo-constant for controls
+char PAUSE_KEY = 'p';
+
 struct CharStyle
 {
   //Boolean style values
@@ -211,6 +214,7 @@ void intInputMenu(string text, Terminal& t, int& to_set);
 void boolInputMenu(string text, Terminal& t, bool& to_set);
 void charInputMenu(string text, Terminal& t, char& to_set);
 void styleInputMenu(string text, Terminal& t, CharStyle& to_edit);
+void pauseMenu(string text, Terminal& t, bool& game_state);
 void styleEditorMenu(Terminal &t);
 void settingsEditorMenu(Terminal &t);
 
@@ -630,15 +634,12 @@ void playGame(Snake &snake, Terminal &t, ipair screen_size)
   ipair boundary = setBoundary(screen_size);
   int prevRow = -1, prevCol = -1; // Initialize previous position
   createGrid(screen_size, t);
-  while (true)
+
+  bool alive = true;
+  char input = getInput();
+
+  while (alive)
   {
-    // Process user input
-    char input = getInput();
-    if (input == 'w' || input == 'a' || input == 's' || input == 'd')
-    {
-      // Change snake direction based on user input
-      snake.changeDirection(input);
-    }
 
     // Move the snake
     snake.move();
@@ -684,16 +685,76 @@ void playGame(Snake &snake, Terminal &t, ipair screen_size)
     if (checkSelfCollision(snake) || checkBoundaryCollision(snake, screen_size))
     {
       // Handle collision (e.g., end the game)
-      break;
+      alive=false;
     }
 
     // Sleep to control the speed of the game
-    usleep(game_speed*1000);
+    int clock = 0;
+    while(clock<=game_speed){
+      input=getInput();
+      if (input == 'w' || input == 'a' || input == 's' || input == 'd')
+      {
+        // Change snake direction based on user input
+        snake.changeDirection(input);
+      }
+      if(input==PAUSE_KEY) 
+      {
+        pauseMenu("", t, alive);
+        t.clearGrid();
+        createGrid(screen_size, t);
+      }
+      clock++;
+      usleep(100);
+    }
   }
 }
 
 
 //menu functions
+void pauseMenu(string text, Terminal& t, bool& game_state)
+{
+  vector<string> ts = {"GAME CURRENTLY PAUSED"};
+  vector<string> ps = {"RESUME", "QUIT"};
+
+  Menu m(ts, ps, t);
+
+  t.clearGrid();
+  bool init = true;
+  while(true)
+  {
+    if (init)
+    {
+      m.updateTerminal();
+      t.draw();
+      init=false;
+    }
+    switch (getInput()) {
+      case 'w':
+        m.moveCursor(-1);
+        m.updateTerminal();
+        t.draw();
+        break;
+      case 's':
+        m.moveCursor(1);
+        m.updateTerminal();
+        t.draw();
+        break;
+      case '\n':
+        //Nested switch statement for when a selection is chosen in the above menu
+        //Prompts a menu to change the selected individual value
+        switch(m.getSelection())
+        {
+          case 1:
+            return;
+          case 2:
+            game_state=false;
+            break;
+        }
+    }
+
+  }
+}
+
 void intInputMenu(string text, Terminal& t, int& to_set)
 {
   vector<string> ts = {text, "where the currently displayed number goes"};
