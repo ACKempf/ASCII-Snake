@@ -18,12 +18,15 @@ int SNAKE_BODY_COLOR = 230;
 int SNAKE_HEAD_COLOR = 230;
 int SNAKE_HEAD_BG = 230;
 int SNAKE_BODY_BG = 230;
-char FOOD_CHAR = '*';
+
 int FOOD_COLOR = 214;
+
+
 char SNAKE_HEAD_UP = '^';
 char SNAKE_HEAD_DOWN = 'v';
 char SNAKE_HEAD_RIGHT = '>';
 char SNAKE_HEAD_LEFT = '<';
+char FOOD_CHAR = '*';
 char SNAKE_BODY_CHAR = '*';
 char GRID_BORDER = '#';
 
@@ -945,12 +948,77 @@ void styleEditorMenu(Terminal &t)
   }
 }
 
+void charEditorMenu(Terminal &t)
+{
+  bool force_menu = true;
+  bool active = true;
+  vector<string> menu_text = {"CHARACTER EDITOR", "NAVIGATE UP & DOWN WITH 'w' & 's'", "PRESS ENTER TO SELECT AN OPTION TO EDIT & C TO CANCEL"};
+  vector<string> menu_options = {"SNAKE HEAD (UP)", "SNAKE HEAD (DOWN)", "SNAKE HEAD (RIGHT)", "SNAKE HEAD (LEFT)", "SNAKE BODY", "FOOD", "BARRIER", "CURSOR"};
+  Menu m(menu_text, menu_options, t);
+
+  while(active)
+  {
+    if (force_menu) 
+    {
+      m.updateTerminal();
+      t.draw();
+    }
+    
+    switch (getInput()) {
+      case 'w':
+        m.moveCursor(-1);
+        m.updateTerminal();
+        t.draw();
+        break;
+      case 's':
+        m.moveCursor(1);
+        m.updateTerminal();
+        t.draw();
+        break;
+      case 'c':
+        return;
+      case '\n':
+        //Nested switch statement for when a selection is chosen in the above menu
+        //Prompts a menu to change the selected individual value
+        switch(m.getSelection())
+        {
+          case 1:
+            charInputMenu("EDITING SNAKE HEAD (UP)", t, SNAKE_HEAD_UP);
+            break;
+          case 2:
+            charInputMenu("EDITING SNAKE HEAD (DOWN)", t, SNAKE_HEAD_DOWN);
+            break;
+          case 3:
+            charInputMenu("EDITING SNAKE HEAD (RIGHT)", t, SNAKE_HEAD_RIGHT);
+            break;
+          case 4:
+            charInputMenu("EDITING SNAKE HEAD (LEFT)", t, SNAKE_HEAD_LEFT);
+            break;
+          case 5:
+            charInputMenu("EDITING SNAKE BODY", t, SNAKE_BODY_CHAR);
+            break;
+          case 6:
+            charInputMenu("EDITING FOOD CHAR", t, FOOD_CHAR);
+            break;
+          case 7:
+            charInputMenu("EDITING BARRIER", t, GRID_BORDER);
+            break;
+          case 8:
+            charInputMenu("EDITING CURSOR", t, CURSOR_CHAR);
+            break;
+        }
+    }
+  }
+}
+
+void gameplayEditorMenu(Terminal &t);
+
 void settingsEditorMenu(Terminal &t)
 {
   bool force_menu = true;
   bool active = true;
   vector<string> menu_text = {"SETTINGS EDITOR", "NAVIGATE UP & DOWN WITH 'w' & 's'", "PRESS ENTER TO SELECT AN OPTION TO EDIT & C TO CANCEL"};
-  vector<string> menu_options = {"STYLE EDITOR"};
+  vector<string> menu_options = {"STYLE EDITOR", "CHAR EDITOR"};
   Menu m(menu_text, menu_options, t);
 
   while(active)
@@ -981,6 +1049,9 @@ void settingsEditorMenu(Terminal &t)
         {
           case 1:
             styleEditorMenu(t);
+            break;
+          case 2:
+            charEditorMenu(t);
             break;
         }
     }
