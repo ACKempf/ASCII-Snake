@@ -25,6 +25,7 @@ char SNAKE_HEAD_DOWN = 'v';
 char SNAKE_HEAD_RIGHT = '>';
 char SNAKE_HEAD_LEFT = '<';
 char SNAKE_BODY_CHAR = '*';
+char GRID_BORDER = '#';
 
 //Pseudo-constants for gameplay
 int GAME_SPEED = 90000;
@@ -343,16 +344,11 @@ public:
   }
 };
 
-int setBoundary(ipair screen_size)
+ipair setBoundary(ipair screen_size)
 {
-  int rows = screen_size.first;
-  int columns = screen_size.second;
-  int boundary;
-  if (rows > columns)
-    boundary = columns - 1;
-  else
-    boundary = rows - 1;
-  return boundary;
+  int rows = screen_size.first - 1;
+  int columns = screen_size.second - 1;
+  return {rows, columns};
 }
 
 void playGame(Snake &snake, Terminal &t, ipair screensize);
@@ -372,11 +368,11 @@ struct Food
   int row = -1;
   int col = -1;
   // Method to spawn food at a random location on the grid
-  void spawn(int boundary)
+  void spawn(ipair boundary)
   {
     // Generate random row and column within the grid boundaries
-    row = rand() % (boundary - 1) + 1;
-    col = rand() % ((boundary * 2) - 1) + 1;
+    row = rand() % (boundary.first - 4) + 4;
+    col = rand() % (boundary.second - 1) + 1;
   }
 
   // Method to check the food collision with the snake
@@ -473,9 +469,9 @@ int main()
     }
   }
 
-  int boundary = setBoundary(screen_size);
-  int startX = rand() % (boundary - 2) + 1;
-  int startY = rand() % (boundary - 2) + 1;
+  ipair boundary = setBoundary(screen_size);
+  int startX = rand() % (boundary.first - 8) + 5;
+  int startY = rand() % (boundary.second - 8) + 5;
   char startDirection = 'd';
 
   Snake snake(startX, startY, startDirection);
@@ -499,22 +495,22 @@ int main()
 // Changes grid based on size of screen, always square.
 void createGrid(ipair screen_size, Terminal &t)
 {
-  int boundary = setBoundary(screen_size);
+  ipair boundary = setBoundary(screen_size);
 
-  for (int i = 0; i <= boundary; i++)
+  for (int i = 3; i <= boundary.first; i++)
   {
-    t.setChar(i, 0, '#');
-    t.setChar(i, boundary * 2, '#');
+    t.setChar(i, 0, GRID_BORDER);
+    t.setChar(i, boundary.second, GRID_BORDER);
   }
-  for (int j = 0; j <= boundary * 2; j++)
+  for (int j = 0; j <= boundary.second; j++)
   {
-    t.setChar(0, j, '#');
-    t.setChar(boundary, j, '#');
+    t.setChar(3, j, GRID_BORDER);
+    t.setChar(boundary.first, j, GRID_BORDER);
   }
 
-  for (int i = 1; i < boundary; i++)
+  for (int i = 4; i < boundary.first; i++)
   {
-    for (int j = 1; j < boundary * 2; j++)
+    for (int j = 1; j < boundary.second; j++)
     {
       t.setChar(i, j, ' ');
     }
@@ -618,9 +614,9 @@ bool checkBoundaryCollision(const Snake &snake, ipair screen_size)
 {
   // Get the coordinates of the head
   ipair head = snake.getBody().front();
-  int boundary = setBoundary(screen_size);
+  ipair boundary = setBoundary(screen_size);
   // Check if the head's coordinates exceed the boundaries
-  if (head.first == 0 || head.first == boundary || head.second == 0 || head.second == boundary * 2)
+  if (head.first == 3 || head.first == boundary.first || head.second == 0 || head.second == boundary.second)
   {
     return true; // Collision detected
   }
@@ -633,7 +629,7 @@ void playGame(Snake &snake, Terminal &t, ipair screen_size)
   // Initialize random seed
   srand(time(NULL));
   Food food;
-  int boundary = setBoundary(screen_size);
+  ipair boundary = setBoundary(screen_size);
   int prevRow = -1, prevCol = -1; // Initialize previous position
   createGrid(screen_size, t);
   while (true)
