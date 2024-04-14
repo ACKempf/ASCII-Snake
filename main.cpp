@@ -30,8 +30,8 @@ bool CURSOR_BLINK = true;
 int CURSOR_FG_COLOR = 220;
 int CURSOR_BG_COLOR = 232;
 
-/*The menu class allows the user to define any number of header lines, and any number of option lines, and allows the user to manipulate a cursor to retrieve
-a selection from the option lines.*/
+/*The menu class allows the programmer to define any number of header lines, and any number of option lines, 
+and allows the user to manipulate a cursor to retrieve a selection from the option lines.*/
 class Menu
 {
   public:
@@ -182,32 +182,36 @@ class Menu
 
 int main()
 {
-  //Enable raw mode
+  //Enable raw mode & clear
   enableRawMode();
   clear();
 
   //Input loop for confirming what display size the user wants
-  //Also for taking dev commands
   ipair screen_size;
   while(true) {
+  clear();
   static char input;
 
+  //Simple printout instructing user
   cout << "Adjust window to desired size and press any key to continue." << endl;
+  //A "press any key to continue" break
   cin.ignore();
 
-  //Store screen size in a integer pair
-  //Trim down number of rows to avoid top row being invisible but usable
+  //Reassign screen_size to current screen size
   screen_size = getTermSize();
+  //Trim off the unusable but represented top row of the screen space
   screen_size.first--;
 
-  //Get closest odd screen sizes
+  //Gets the closest screensize to the selected that is odd
+  //Used because only odd screen dimensions have a true "center character"
   if (screen_size.first%2 == 0) screen_size.first--;
   if (screen_size.second%2 == 0) screen_size.second--;
 
+  //Prompts the user to confirm the current display dimensions
   cout << "Enter y/Y to confirm display size: " << screen_size.first << "x" << screen_size.second << endl;
   cin >> input;
+  //Break user-dimension input loop with current screen dimensions set
   if (input=='y'||input=='Y') break;
-  clear();
   }
 
   //Create Terminal object of the correct size
