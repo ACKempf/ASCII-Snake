@@ -10,25 +10,6 @@ using ipair = pair<int, int>;
 using pvector = vector<pair<int, int>>;
 
 //Pseudo-constants for various things
-bool MENU_OPTION_BOLD = false;
-bool MENU_OPTION_ITALIC = false;
-bool MENU_OPTION_UNDERLINE = false;
-bool MENU_OPTION_BLINK = false;
-int MENU_OPTION_FG_COLOR = 231;
-int MENU_OPTION_BG_COLOR = 232;
-bool MENU_TEXT_BOLD = false;
-bool MENU_TEXT_ITALIC = false;
-bool MENU_TEXT_UNDERLINE = false;
-bool MENU_TEXT_BLINK = false;
-int MENU_TEXT_FG_COLOR = 231;
-int MENU_TEXT_BG_COLOR = 232;
-char CURSOR_CHAR = '>';
-bool CURSOR_BOLD = true;
-bool CURSOR_ITALIC = true;
-bool CURSOR_UNDERLINE = false;
-bool CURSOR_BLINK = true;
-int CURSOR_FG_COLOR = 220;
-int CURSOR_BG_COLOR = 232;
 char CURSOR_UP = 'w';
 char CURSOR_DOWN = 's';
 
@@ -48,6 +29,32 @@ char SNAKE_BODY_CHAR = '*';
 //Pseudo-constants for gameplay
 int GAME_SPEED = 90000;
 bool SELF_COLLISION = true;
+
+struct CharStyle
+{
+  //Boolean style values
+  bool bold;
+  bool italic;
+  bool underline;
+  bool blinking;
+
+  //integer style values
+  int fg_color;
+  int bg_color;
+
+  CharStyle(bool bold, bool ital, bool undr, bool blnk, int fgcl, int bgcl) : bold(bold), italic(ital), underline(undr), blinking(blnk), fg_color(fgcl), bg_color(bgcl) {};
+};
+
+//Menu style presets
+CharStyle MENU_TEXT(false, false, false, false, 231, 232);
+CharStyle MENU_OPTION(false, false, false, false, 231, 232);
+CharStyle CURSOR(false, false, false, true, 220, 232);
+char CURSOR_CHAR = '>';
+
+CharStyle SNAKE_BODY(false, false, false, false, 231, 232);
+CharStyle SNAKE_HEAD(false, false, false, false, 231, 232);
+CharStyle SNAKE_FOOD(false, false, false, false, 231, 232);
+CharStyle BARRIER(false, false, false, false, 231, 232);
 
 /*
 Menu Class:
@@ -146,7 +153,7 @@ class Menu
         int current_column_offset=0;
         for (char c:s) {
           //Set current character with MENU_TEXT constant style
-          t.setChar(current_row, left_justification_column+current_column_offset, c, MENU_TEXT_BOLD, MENU_TEXT_ITALIC, MENU_TEXT_UNDERLINE, MENU_TEXT_BLINK, MENU_TEXT_FG_COLOR, MENU_TEXT_BG_COLOR);
+          t.setChar(current_row, left_justification_column+current_column_offset, c, MENU_TEXT.bold, MENU_TEXT.italic, MENU_TEXT.underline, MENU_TEXT.blinking, MENU_TEXT.fg_color, MENU_TEXT.bg_color);
           //Advance the column to the right
           current_column_offset++;
         }
@@ -164,11 +171,11 @@ class Menu
         int current_column_offset=0;
         for (char c:s) {
           //MENU_OPTION style
-          t.setChar(current_row, left_justification_column+current_column_offset, c, MENU_OPTION_BOLD, MENU_OPTION_ITALIC, MENU_OPTION_UNDERLINE, MENU_OPTION_BLINK, MENU_OPTION_FG_COLOR, MENU_OPTION_BG_COLOR);
+          t.setChar(current_row, left_justification_column+current_column_offset, c, MENU_OPTION.bold, MENU_OPTION.italic, MENU_OPTION.underline, MENU_OPTION.blinking, MENU_OPTION.fg_color, MENU_OPTION.bg_color);
           current_column_offset++;
         }
         //Adds visual cursor if current line cursor position matches active cursor position
-        if (selection_cursor_index == cursor_position) t.setChar(current_row, left_justification_column-cursor_column_offset, CURSOR_CHAR, CURSOR_BOLD, CURSOR_ITALIC, CURSOR_UNDERLINE, CURSOR_BLINK, CURSOR_FG_COLOR, CURSOR_BG_COLOR);
+        if (selection_cursor_index == cursor_position) t.setChar(current_row, left_justification_column-cursor_column_offset, CURSOR_CHAR, CURSOR.bold, CURSOR.italic, CURSOR.underline, CURSOR.blinking, CURSOR.fg_color, CURSOR.bg_color);
 
         current_row++;
         //Advances the cursor position representation of the current option
@@ -206,7 +213,9 @@ class Menu
 void intInputMenu(string text, Terminal& t, int& to_set);
 void boolInputMenu(string text, Terminal& t, bool& to_set);
 void charInputMenu(string text, Terminal& t, char& to_set);
-void settingsMenu(Terminal &t);
+void styleInputMenu(string text, Terminal& t, CharStyle& to_edit);
+void styleEditorMenu(Terminal &t);
+void settingsEditorMenu(Terminal &t);
 
 /*
     Snake Class:
@@ -478,7 +487,7 @@ int main()
     playGame(snake, t, screen_size);
     break;
   case 2:
-    settingsMenu(t);
+    settingsEditorMenu(t);
     break;
   case 3:
     exit(0);
@@ -653,7 +662,7 @@ void playGame(Snake &snake, Terminal &t, ipair screen_size)
     }
 
     // Draw the food
-    t.setChar(food.row, food.col, FOOD_CHAR, false, false, false, false, CURSOR_FG_COLOR, FOOD_COLOR);
+    t.setChar(food.row, food.col, FOOD_CHAR, false, false, false, false, CURSOR.bg_color, FOOD_COLOR);
 
     // Draw the snake
     drawSnake(snake, t);
@@ -823,14 +832,69 @@ void charInputMenu(string text, Terminal& t, char& to_set)
   }
 }
 
-void settingsMenu(Terminal &t)
+void styleInputMenu(string text, Terminal& t, CharStyle& to_edit)
+{
+  t.clearGrid();
+
+  bool force_menu = true;
+  vector<string> menu_text = {text, "NAVIGATE UP & DOWN WITH 'w' & 's'", "PRESS ENTER TO SELECT AN OPTION TO EDIT & C TO CANCEL"};
+  vector<string> menu_options = {"BOLD", "ITALIC", "UNDERLINE", "BLINKING", "FOREGROUND COLOR", "BACKGROUND COLOR"};
+  Menu m(menu_text, menu_options, t);
+
+  while (true)
+  {
+    if (force_menu)
+    {
+      m.updateTerminal();
+      t.draw();
+    }
+
+    switch (getInput())
+    {
+      case 's':
+        m.moveCursor(1);
+        m.updateTerminal();
+        t.draw();
+        break;
+      case 'w':
+        m.moveCursor(-1);
+        m.updateTerminal();
+        t.draw();
+        break;
+      case 'c':
+        return;
+      case '\n':
+        //Nested switch to find out what the user pressed enter on and show the according menu item
+        switch(m.getSelection()) {
+          case 1:
+            boolInputMenu("SET BOLD STYLE PREFERENCE", t, to_edit.bold);
+            break;
+          case 2:
+            boolInputMenu("SET ITALIC STYLE PREFERENCE", t, to_edit.italic);
+            break;
+          case 3:
+            boolInputMenu("SET UNDERLINE STYLE PREFERENCE", t, to_edit.underline);
+            break;
+          case 4:
+            boolInputMenu("SET BLINK STYLE PREFERENCE", t, to_edit.blinking);
+            break;
+          case 5:
+            intInputMenu("SET FOREGROUND COLOR", t, to_edit.fg_color);
+            break;
+          case 6:
+            intInputMenu("SET BACKGROUND COLOR", t, to_edit.bg_color);
+            break;
+        }
+    }
+  }
+}
+
+void styleEditorMenu(Terminal &t)
 {
   bool force_menu = true;
   bool active = true;
-  vector<string> menu_text = {"NAVIGATE MENU WITH W&S", "PRESS ENTER TO SELECT, C TO RETURN TO MAIN MENU"};
-  vector<string> menu_options = {"MENU_OPTION_BG_COLOR", "MENU_TEXT_BG_COLOR", "CURSOR_CHAR", "CURSOR_BG_COLOR",
-  "CURSOR_FG_COLOR", "SNAKE_HEAD_BG", "SNAKE_BODY_BG", "FOOD_COLOR", "FOOD_CHAR", "SNAKE_HEAD_UP", "SNAKE_HEAD_DOWN", 
-  "SNAKE_HEAD_LEFT", "SNAKE_HEAD_RIGHT", "DISABLE_SELF_COLLISION", "GAME_SPEED"};
+  vector<string> menu_text = {"STYLE EDITOR", "NAVIGATE UP & DOWN WITH 'w' & 's'", "PRESS ENTER TO SELECT AN OPTION TO EDIT & C TO CANCEL"};
+  vector<string> menu_options = {"SNAKE HEAD STYLE", "SNAKE BODY STYLE", "FOOD STYLE", "BARRIER STYLE", "MENU SELECTIONS STYLE", "MENU TEXT STYLE", "CURSOR STYLE"};
   Menu m(menu_text, menu_options, t);
 
   while(active)
@@ -860,49 +924,68 @@ void settingsMenu(Terminal &t)
         switch(m.getSelection())
         {
           case 1:
-            intInputMenu("ENTER ANSI COLOR CODE", t, MENU_OPTION_BG_COLOR);
+            styleInputMenu("EDITING SNAKE HEAD STYLE", t, SNAKE_HEAD);
             break;
           case 2:
-            intInputMenu("ENTER ANSI COLOR CODE", t, MENU_TEXT_BG_COLOR);
+            styleInputMenu("EDITING SNAKE BODY STYLE", t, SNAKE_BODY);
             break;
           case 3:
-            charInputMenu("ENTER A CHARACTER", t, CURSOR_CHAR);
+            styleInputMenu("EDITING SNAKE FOOD STYLE", t, SNAKE_FOOD);
             break;
           case 4:
-            intInputMenu("ENTER ANSI COLOR CODE", t, CURSOR_BG_COLOR);
+            styleInputMenu("EDITING BARRIER STYLE", t, BARRIER);
             break;
           case 5:
-            intInputMenu("ENTER ANSI COLOR CODE", t, CURSOR_FG_COLOR);
+            styleInputMenu("EDITING MENU SELECTIONS STYLE", t, MENU_OPTION);
             break;
           case 6:
-            intInputMenu("ENTER ANSI COLOR CODE", t, SNAKE_HEAD_BG);
+            styleInputMenu("EDITING MENU TEXT STYLE", t, MENU_TEXT);
             break;
           case 7:
-            intInputMenu("ENTER ANSI COLOR CODE", t, SNAKE_BODY_BG);
+            styleInputMenu("EDITING CURSOR STYLE", t, CURSOR);
             break;
-          case 8:
-            intInputMenu("ENTER ANSI COLOR CODE", t, FOOD_COLOR);
+        }
+    }
+  }
+}
+
+void settingsEditorMenu(Terminal &t)
+{
+  bool force_menu = true;
+  bool active = true;
+  vector<string> menu_text = {"SETTINGS EDITOR", "NAVIGATE UP & DOWN WITH 'w' & 's'", "PRESS ENTER TO SELECT AN OPTION TO EDIT & C TO CANCEL"};
+  vector<string> menu_options = {"STYLE EDITOR"};
+  Menu m(menu_text, menu_options, t);
+
+  while(active)
+  {
+    if (force_menu) 
+    {
+      m.updateTerminal();
+      t.draw();
+    }
+    
+    switch (getInput()) {
+      case 'w':
+        m.moveCursor(-1);
+        m.updateTerminal();
+        t.draw();
+        break;
+      case 's':
+        m.moveCursor(1);
+        m.updateTerminal();
+        t.draw();
+        break;
+      case 'c':
+        return;
+      case '\n':
+        //Nested switch statement for when a selection is chosen in the above menu
+        //Prompts a menu to change the selected individual value
+        switch(m.getSelection())
+        {
+          case 1:
+            styleEditorMenu(t);
             break;
-          case 9:
-            charInputMenu("ENTER FOOD CHARACTER", t, FOOD_CHAR);
-            break;
-          case 10:
-            charInputMenu("ENTER SNAKE HEAD UP", t, SNAKE_HEAD_UP);
-            break;
-          case 11:
-            charInputMenu("ENTER SNAKE HEAD DOWN", t, SNAKE_HEAD_DOWN);
-            break;
-          case 12:
-            charInputMenu("ENTER SNAKE HEAD LEFT", t, SNAKE_HEAD_LEFT);
-            break;
-          case 13:
-            charInputMenu("ENTER SNAKE HEAD RIGHT", t, SNAKE_HEAD_RIGHT);
-            break;
-          case 14:
-            boolInputMenu("ENABLE/DISABLE SELF-COLLISION", t, SELF_COLLISION);
-            break;
-          case 15:
-            intInputMenu("FRAME DELAY IN NANOSECONDS", t, GAME_SPEED);
         }
     }
   }

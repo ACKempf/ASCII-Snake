@@ -212,6 +212,7 @@
 
         return formatted;
       }
+      
 
       //Constants for the number of rows and columns
       const int rows;
