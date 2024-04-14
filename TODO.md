@@ -17,17 +17,17 @@
 *NOTE: I place "character" in quotes because the type of the elements in the array are string, but the class should be structured in such a way that those strings only actually print 1 character to console, the string is used to contain the ANSI escape sequences and the single character to be printed*
 
 ### 2. Develop Core Functionality
-- [ ] Implement snake grid system
-- [ ] Implement snake object
-- [ ] Implement snake movement
-- [ ] Implement snake growth
+- [x] Implement snake grid system
+- [x] Implement snake object
+- [x] Implement snake movement
+- [x] Implement snake growth
 - [ ] Implement food placement mechanics
-- [ ] Implement food collision "eating" mechanics
-- [ ] Implement wall collision "game-over" mechanics
-- [ ] Implement self collision "game-over" mechanics
+- [x] Implement food collision "eating" mechanics
+- [x] Implement wall collision "game-over" mechanics
+- [x] Implement self collision "game-over" mechanics
 
 ### 3. Implement QOL features
-- [ ] Implement directional graphic for snake head
+- [x] Implement directional graphic for snake head
 - [ ] Implement possible "slithering" graphic effect for snake body using italic effect
 - [ ] Implement game margin and border
 - [ ] Implement score counter
