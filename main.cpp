@@ -32,7 +32,7 @@ int CURSOR_BG_COLOR = 232;
 char CURSOR_UP = 'w';
 char CURSOR_DOWN = 's';
 
-//Pseudo-constants for menu
+//Pseudo-constants for snake
 int SNAKE_BODY_COLOR = 230;
 int SNAKE_HEAD_COLOR = 230;
 int SNAKE_HEAD_BG = 230;
@@ -43,7 +43,11 @@ char SNAKE_HEAD_UP = '^';
 char SNAKE_HEAD_DOWN = 'v';
 char SNAKE_HEAD_RIGHT = '>';
 char SNAKE_HEAD_LEFT = '<';
-int GAME_SPEED = 70000;
+char SNAKE_BODY_CHAR = '*';
+
+//Pseudo-constants for gameplay
+int GAME_SPEED = 90000;
+bool SELF_COLLISION = true;
 
 /*
 Menu Class:
@@ -210,7 +214,6 @@ void settingsMenu(Terminal &t);
     It grows by adding segments to its body when it consumes food. The class provides functions to control
     the snake's movement, change its direction, retrieve its body segments, and make it grow.
 */
-
 class Snake
 {
 private:
@@ -220,36 +223,36 @@ private:
 
 public:
   // Constructor to initialize the snake with a starting position and direction
-  Snake(int initX, int initY, char initDirection)
+  Snake(int init_row, int init_column, char init_direction)
   {
     // Initialize the snake with a single segment at the starting position
-    body.push_back({initX, initY});
-    direction = initDirection;
-    prevTailPos = {initX, initY};
+    body.push_back({init_row, init_column});
+    direction = init_direction;
+    prevTailPos = {init_row, init_column};
   }
 
   // Function to move the snake in the current direction
   void move()
   {
     // Calculate the offset for the new head position based on the current direction
-    int xOffset = 0, yOffset = 0;
+    int row_offset = 0, column_offset = 0;
     switch (direction)
     {
     case 'a': // Left
-      xOffset = 0;
-      yOffset = -1;
+      row_offset = 0;
+      column_offset = -1;
       break;
     case 'd': // Right
-      xOffset = 0;
-      yOffset = 1;
+      row_offset = 0;
+      column_offset = 1;
       break;
     case 'w': // Up
-      xOffset = -1;
-      yOffset = 0;
+      row_offset = -1;
+      column_offset = 0;
       break;
     case 's': // Down
-      xOffset = 1;
-      yOffset = 0;
+      row_offset = 1;
+      column_offset = 0;
       break;
     }
 
@@ -264,15 +267,21 @@ public:
 
     // Calculate the new head position
     ipair &head = body.front();
-    head.first += xOffset;
-    head.second += yOffset;
+    head.first += row_offset;
+    head.second += column_offset;
   }
 
   // Function to change the direction of the snake
-  void changeDirection(char newDirection)
+  void changeDirection(char new_direction)
   {
-    // Update the direction
-    direction = newDirection;
+    //Messy ifs, Only change direction is it is not opposite to the current direciton
+    if (!((new_direction == 'w' && direction == 's')||(new_direction == 's' && direction == 'w'))){
+      if (!((new_direction == 'a' && direction == 'd')||(new_direction == 'd' && direction == 'a'))) {
+        // Update the direction
+        direction = new_direction;
+      }
+    }
+    
   }
 
   // Getter function to retrieve the snake's body
@@ -300,40 +309,40 @@ public:
     const ipair &tailSegment = body.back();
 
     // Calculate the position for the new segment
-    int newX = tailSegment.first;
-    int newY = tailSegment.second;
+    int new_row = tailSegment.first;
+    int new_column = tailSegment.second;
 
     // Add the new segment in a position adjacent to the tail segment, depending on the direction
     switch (direction)
     {
     case 'a':    // Left
-      newY += 1; // Move the new segment one column to the left
+      new_column += 1; // Move the new segment one column to the left
       break;
     case 'd':    // Right
-      newY -= 1; // Move the new segment one column to the right
+      new_column -= 1; // Move the new segment one column to the right
       break;
     case 'w':    // Up
-      newX += 1; // Move the new segment one row up
+      new_row += 1; // Move the new segment one row up
       break;
     case 's':    // Down
-      newX -= 1; // Move the new segment one row down
+      new_row -= 1; // Move the new segment one row down
       break;
     }
 
     // Add the new segment to the end of the body vector, extending the tail
-    body.push_back({newX, newY});
+    body.push_back({new_row, new_column});
   }
 };
 
 int setBoundary(ipair screen_size)
 {
-  int height = screen_size.first;
-  int width = screen_size.second;
+  int rows = screen_size.first;
+  int columns = screen_size.second;
   int boundary;
-  if (height > width)
-    boundary = width - 1;
+  if (rows > columns)
+    boundary = columns - 1;
   else
-    boundary = height - 1;
+    boundary = rows - 1;
   return boundary;
 }
 
@@ -504,6 +513,7 @@ void createGrid(ipair screen_size, Terminal &t)
 
   t.draw();
 }
+
 /*
     drawSnake Function:
     This function is responsible for drawing the snake on a terminal screen. It takes the snake object and a terminal object as parameters.
@@ -516,7 +526,6 @@ void drawSnake(const Snake &snake, Terminal &t)
   // Get the body of the snake
   const pvector &body = snake.getBody();
   // Define the characters to represent the snake's body
-  char bodyChar = '*'; // Character for snake's body
   char headChar;
   switch (snake.getDirection())
   {
@@ -532,24 +541,19 @@ void drawSnake(const Snake &snake, Terminal &t)
   case 's': // Down
     headChar = SNAKE_HEAD_DOWN;
     break;
-  default:
-    headChar = SNAKE_HEAD_RIGHT;
-    break;
+  default: //Raise error if invalid head direction is found
+    cerr << "Current head direction: " << snake.getDirection();
+    throw logic_error("Invalid head direction while drawing snake");
   }
 
+  //Print body segments (if there are any)
+  for (const ipair &segment:body) {
+    t.setChar(segment.first, segment.second, SNAKE_BODY_CHAR, false, false, false, false, SNAKE_BODY_COLOR, SNAKE_BODY_BG);
+  }
+  
   // Draw the snake's head
-  const ipair &headPos = body.front();
+  const ipair& headPos = body.front();
   t.setChar(headPos.first, headPos.second, headChar, false, false, false, false, SNAKE_HEAD_COLOR, SNAKE_HEAD_BG);
-
-  // Draw the snake's body segments (if any)
-  if (body.size() > 1)
-  {
-    for (size_t i = 1; i < body.size(); ++i)
-    {
-      const ipair &segment = body[i];
-      t.setChar(segment.first, segment.second, bodyChar, false, false, false, false, SNAKE_BODY_COLOR, SNAKE_BODY_BG);
-    }
-  }
 
   // Erase the previous position of the tail segment
   ipair prevTailPos = snake.getPrevTailPos();
@@ -576,13 +580,16 @@ bool checkSelfCollision(const Snake &snake)
   // Get the coordinates of the head
   ipair head = body.front();
 
-  // Iterate over the body segments starting from the second segment
+  // Iterate over the body segments starting from the third segment
   for (auto i = body.begin() + 1; i != body.end(); i++)
   {
     // If the coordinates of the current segment match the head's coordinates, return true
     if (*i == head)
     {
-      return true;
+      //Only report self collision if SELF_COLLISION flag is true
+      if (SELF_COLLISION){
+        return true;
+      } else return false;
     }
   }
 
@@ -598,7 +605,6 @@ bool checkSelfCollision(const Snake &snake)
     It then checks if the head's coordinates exceed the boundaries. If a collision is detected, it returns
     true; otherwise, it returns false, indicating no collision.
 */
-
 bool checkBoundaryCollision(const Snake &snake, ipair screen_size)
 {
   // Get the coordinates of the head
@@ -679,6 +685,8 @@ void playGame(Snake &snake, Terminal &t, ipair screen_size)
   }
 }
 
+
+//menu functions
 void intInputMenu(string text, Terminal& t, int& to_set)
 {
   vector<string> ts = {text, "where the currently displayed number goes"};
@@ -822,7 +830,7 @@ void settingsMenu(Terminal &t)
   vector<string> menu_text = {"NAVIGATE MENU WITH W&S", "PRESS ENTER TO SELECT, C TO RETURN TO MAIN MENU"};
   vector<string> menu_options = {"MENU_OPTION_BG_COLOR", "MENU_TEXT_BG_COLOR", "CURSOR_CHAR", "CURSOR_BG_COLOR",
   "CURSOR_FG_COLOR", "SNAKE_HEAD_BG", "SNAKE_BODY_BG", "FOOD_COLOR", "FOOD_CHAR", "SNAKE_HEAD_UP", "SNAKE_HEAD_DOWN", 
-  "SNAKE_HEAD_LEFT", "SNAKE_HEAD_RIGHT"};
+  "SNAKE_HEAD_LEFT", "SNAKE_HEAD_RIGHT", "DISABLE_SELF_COLLISION", "GAME_SPEED"};
   Menu m(menu_text, menu_options, t);
 
   while(active)
@@ -890,6 +898,11 @@ void settingsMenu(Terminal &t)
           case 13:
             charInputMenu("ENTER SNAKE HEAD RIGHT", t, SNAKE_HEAD_RIGHT);
             break;
+          case 14:
+            boolInputMenu("ENABLE/DISABLE SELF-COLLISION", t, SELF_COLLISION);
+            break;
+          case 15:
+            intInputMenu("FRAME DELAY IN NANOSECONDS", t, GAME_SPEED);
         }
     }
   }
