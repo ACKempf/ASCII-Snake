@@ -13,15 +13,6 @@ using pvector = vector<pair<int, int>>;
 char CURSOR_UP = 'w';
 char CURSOR_DOWN = 's';
 
-//Pseudo-constants for snake
-int SNAKE_BODY_COLOR = 230;
-int SNAKE_HEAD_COLOR = 230;
-int SNAKE_HEAD_BG = 230;
-int SNAKE_BODY_BG = 230;
-
-int FOOD_COLOR = 214;
-
-
 char SNAKE_HEAD_UP = '^';
 char SNAKE_HEAD_DOWN = 'v';
 char SNAKE_HEAD_RIGHT = '>';
@@ -31,8 +22,9 @@ char SNAKE_BODY_CHAR = '*';
 char GRID_BORDER = '#';
 
 //Pseudo-constants for gameplay
-int INITIAL_SPEED = 90000;
-int SPEED_INCREMENT = 500;
+int INITIAL_SPEED = 500;
+int MAX_SPEED = 200;
+int SPEED_MULTIPLIER = 90;
 bool SELF_COLLISION = true;
 
 struct CharStyle
@@ -682,8 +674,10 @@ void playGame(Snake &snake, Terminal &t, ipair screen_size)
       snake.grow();
       // Respawn food
       food.spawn(boundary);
-      // Increase game speed
-      game_speed -= SPEED_INCREMENT;
+      // Increase game speed & check if game speed is below max speed.
+      if (game_speed>MAX_SPEED){
+      game_speed = int(game_speed*(float(SPEED_MULTIPLIER)/100.0));
+      } else game_speed=MAX_SPEED;
     }
 
     // Check for collisions after the snake has moved
@@ -694,7 +688,7 @@ void playGame(Snake &snake, Terminal &t, ipair screen_size)
     }
 
     // Sleep to control the speed of the game
-    usleep(game_speed);
+    usleep(game_speed*1000);
   }
 }
 
@@ -1021,7 +1015,7 @@ void gameplayEditorMenu(Terminal &t)
   bool force_menu = true;
   bool active = true;
   vector<string> menu_text = {"GAMEPLAY EDITOR", "NAVIGATE UP & DOWN WITH 'w' & 's'", "PRESS ENTER TO SELECT AN OPTION TO EDIT & C TO CANCEL"};
-  vector<string> menu_options = {"INITIAL GAME SPEED", "FOOD SPEED INCREMENT", "SELF COLLISION"};
+  vector<string> menu_options = {"INITIAL GAME SPEED", "MAX GAME SPEED", "FOOD SPEED MULTIPLIER", "SELF COLLISION"};
   Menu m(menu_text, menu_options, t);
 
   while(active)
@@ -1051,12 +1045,15 @@ void gameplayEditorMenu(Terminal &t)
         switch(m.getSelection())
         {
           case 1:
-            intInputMenu("INITIAL GAME SPEED IN MICROSECONDS/FRAME", t, INITIAL_SPEED);
+            intInputMenu("INITIAL GAME SPEED IN MILLISECONDS/FRAME", t, INITIAL_SPEED);
             break;
           case 2:
-            intInputMenu("CHANGE IN FRAME SPEED AFTER COLLECTING FOOD IN MICROSECONDS/FRAME", t, SPEED_INCREMENT);
+            intInputMenu("MAX POSSIBLE SPEED OF GAME IN MILLISECONDS/FRAME", t, MAX_SPEED);
             break;
           case 3:
+            intInputMenu("MULTIPLIES THE INITIAL GAME SPEED BY THIS VALUE % WHEN FOOD IS GATHERED", t, SPEED_MULTIPLIER);
+            break;
+          case 4:
             boolInputMenu("ENABLE OR DISABLE SELF COLLISION", t, SELF_COLLISION);
         }
     }
