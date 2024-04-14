@@ -28,7 +28,8 @@ char SNAKE_BODY_CHAR = '*';
 char GRID_BORDER = '#';
 
 //Pseudo-constants for gameplay
-int GAME_SPEED = 90000;
+int INITIAL_SPEED = 90000;
+int SPEED_INCREMENT = 500;
 bool SELF_COLLISION = true;
 
 struct CharStyle
@@ -499,13 +500,13 @@ void createGrid(ipair screen_size, Terminal &t)
 
   for (int i = 3; i <= boundary.first; i++)
   {
-    t.setChar(i, 0, GRID_BORDER);
-    t.setChar(i, boundary.second, GRID_BORDER);
+    t.setChar(i, 0, GRID_BORDER, BARRIER.bold, BARRIER.italic, BARRIER.underline, BARRIER.blinking, BARRIER.fg_color, BARRIER.bg_color);
+    t.setChar(i, boundary.second, GRID_BORDER, BARRIER.bold, BARRIER.italic, BARRIER.underline, BARRIER.blinking, BARRIER.fg_color, BARRIER.bg_color);
   }
   for (int j = 0; j <= boundary.second; j++)
   {
     t.setChar(3, j, GRID_BORDER);
-    t.setChar(boundary.first, j, GRID_BORDER);
+    t.setChar(boundary.first, j, GRID_BORDER, BARRIER.bold, BARRIER.italic, BARRIER.underline, BARRIER.blinking, BARRIER.fg_color, BARRIER.bg_color);
   }
 
   for (int i = 4; i < boundary.first; i++)
@@ -553,12 +554,12 @@ void drawSnake(const Snake &snake, Terminal &t)
 
   //Print body segments (if there are any)
   for (const ipair &segment:body) {
-    t.setChar(segment.first, segment.second, SNAKE_BODY_CHAR, false, false, false, false, SNAKE_BODY_COLOR, SNAKE_BODY_BG);
+    t.setChar(segment.first, segment.second, SNAKE_BODY_CHAR, SNAKE_BODY.bold, SNAKE_BODY.italic, SNAKE_BODY.underline, SNAKE_BODY.blinking, SNAKE_BODY.fg_color, SNAKE_BODY.bg_color);
   }
   
   // Draw the snake's head
   const ipair& headPos = body.front();
-  t.setChar(headPos.first, headPos.second, headChar, false, false, false, false, SNAKE_HEAD_COLOR, SNAKE_HEAD_BG);
+  t.setChar(headPos.first, headPos.second, headChar, SNAKE_HEAD.bold, SNAKE_HEAD.italic, SNAKE_HEAD.underline, SNAKE_HEAD.blinking, SNAKE_HEAD.fg_color, SNAKE_HEAD.bg_color);
 
   // Erase the previous position of the tail segment
   ipair prevTailPos = snake.getPrevTailPos();
@@ -626,9 +627,11 @@ bool checkBoundaryCollision(const Snake &snake, ipair screen_size)
 
 void playGame(Snake &snake, Terminal &t, ipair screen_size)
 {
+  
   // Initialize random seed
   srand(time(NULL));
   Food food;
+  int game_speed = INITIAL_SPEED;
   ipair boundary = setBoundary(screen_size);
   int prevRow = -1, prevCol = -1; // Initialize previous position
   createGrid(screen_size, t);
@@ -658,7 +661,7 @@ void playGame(Snake &snake, Terminal &t, ipair screen_size)
     }
 
     // Draw the food
-    t.setChar(food.row, food.col, FOOD_CHAR, false, false, false, false, CURSOR.bg_color, FOOD_COLOR);
+    t.setChar(food.row, food.col, FOOD_CHAR, SNAKE_FOOD.bold, SNAKE_FOOD.italic, SNAKE_FOOD.underline, SNAKE_FOOD.blinking, SNAKE_FOOD.fg_color, SNAKE_FOOD.bg_color);
 
     // Draw the snake
     drawSnake(snake, t);
@@ -676,6 +679,8 @@ void playGame(Snake &snake, Terminal &t, ipair screen_size)
       snake.grow();
       // Respawn food
       food.spawn(boundary);
+      // Increase game speed
+      game_speed -= SPEED_INCREMENT;
     }
 
     // Check for collisions after the snake has moved
@@ -686,7 +691,7 @@ void playGame(Snake &snake, Terminal &t, ipair screen_size)
     }
 
     // Sleep to control the speed of the game
-    usleep(GAME_SPEED);
+    usleep(game_speed);
   }
 }
 
