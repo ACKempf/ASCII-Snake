@@ -16,25 +16,30 @@
 
 *NOTE: I place "character" in quotes because the type of the elements in the array are string, but the class should be structured in such a way that those strings only actually print 1 character to console, the string is used to contain the ANSI escape sequences and the single character to be printed*
 
-### 2. Develop Game Mechanics
-- [ ] Implement Tetris grid.
-- [ ] Create and display Tetromino shapes within the grid.
-- [ ] Implement boundary detection to prevent Tetriminos from moving beyond the grid boundaries.
-- [ ] Implement collision detection to detect when Tetriminos collide with other Tetriminos or the boundaries.
-- [ ] Allow rotation of Tetriminos while ensuring they do not collide with other Tetriminos or the boundaries.
-- [ ] Implement Tetrimino movement speed control, adjusting how quickly Tetriminos fall down the grid.
+### 2. Develop Core Functionality
+- [ ] Implement snake grid system
+- [ ] Implement snake object
+- [ ] Implement snake movement
+- [ ] Implement snake growth
+- [ ] Implement food placement mechanics
+- [ ] Implement food collision "eating" mechanics
+- [ ] Implement wall collision "game-over" mechanics
+- [ ] Implement self collision "game-over" mechanics
 
-### 3. Develop Game Logic
-- [ ] Implement a mechanism to control the speed of Tetrimino descent.
-- [ ] game states (ex. playing, paused, game over).
-- [ ] Implement game over detection to end the game when Tetriminos reach the top of the grid.
-- [ ] Implement scoring mechanism based on cleared rows(?).
-- [ ] Implement level progression(?)
-- [ ] Implement statistics screen to show the amount of times each tetrimino has been placed on the grid during the game(?).
-
-### 4. Miscellaneous
-- [ ] Add settings menu with options (expand on this later).
-- [ ] Add color (Background and tetromino)
-- [ ] Add music(?)
+### 3. Implement QOL features
+- [ ] Implement directional graphic for snake head
+- [ ] Implement possible "slithering" graphic effect for snake body using italic effect
+- [ ] Implement game margin and border
+- [ ] Implement score counter
+- [ ] Implement gameover restart screen
+- [ ] Implement cursor based main menu
 - [ ] Implement file to log and save high scores(?)
-- [ ] Add support for Windows(?)
+- [ ] Implement method to browse high scores from menu
+- [ ] Implement settings menu
+- [ ] Implement pause functionality
+
+### 4. If there is time
+- [ ] Allow changing of core & graphics settings from settings menu
+- [ ] Allow changing of timing and control settings from the settings menu
+- [ ] Implement additional gameplay modes
+- [ ] Implement dynamically resizing the screen while playing
