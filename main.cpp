@@ -29,6 +29,8 @@ bool CURSOR_UNDERLINE = false;
 bool CURSOR_BLINK = true;
 int CURSOR_FG_COLOR = 220;
 int CURSOR_BG_COLOR = 232;
+char CURSOR_UP = 'w';
+char CURSOR_DOWN = 's';
 int SNAKE_BODY_COLOR = 230;
 int SNAKE_HEAD_COLOR = 230;
 int SNAKE_HEAD_BG = 230;
@@ -376,29 +378,29 @@ int main()
   //Input loop for confirming what display size the user wants
   ipair screen_size;
   while(true) {
-  clear();
-  static char input;
+    clear();
+    static char input;
 
-  //Simple printout instructing user
-  cout << "Adjust window to desired size and press any key to continue." << endl;
-  //A "press any key to continue" break
-  cin.ignore();
+    //Simple printout instructing user
+    cout << "Adjust window to desired size and press any key to continue." << endl;
+    //A "press any key to continue" break
+    cin.ignore();
 
-  //Reassign screen_size to current screen size
-  screen_size = getTermSize();
-  //Trim off the unusable but represented top row of the screen space
-  screen_size.first--;
+    //Reassign screen_size to current screen size
+    screen_size = getTermSize();
+    //Trim off the unusable but represented top row of the screen space
+    screen_size.first--;
 
-  //Gets the closest screensize to the selected that is odd
-  //Used because only odd screen dimensions have a true "center character"
-  if (screen_size.first%2 == 0) screen_size.first--;
-  if (screen_size.second%2 == 0) screen_size.second--;
+    //Gets the closest screensize to the selected that is odd
+    //Used because only odd screen dimensions have a true "center character"
+    if (screen_size.first%2 == 0) screen_size.first--;
+    if (screen_size.second%2 == 0) screen_size.second--;
 
-  //Prompts the user to confirm the current display dimensions
-  cout << "Enter y/Y to confirm display size: " << screen_size.first << "x" << screen_size.second << endl;
-  cin >> input;
-  //Break user-dimension input loop with current screen dimensions set
-  if (input=='y'||input=='Y') break;
+    //Prompts the user to confirm the current display dimensions
+    cout << "Enter y/Y to confirm display size: " << screen_size.first << "x" << screen_size.second << endl;
+    cin >> input;
+    //Break user-dimension input loop with current screen dimensions set
+    if (input=='y'||input=='Y') break;
   }
 
   //Create Terminal object of the correct size
@@ -408,7 +410,10 @@ int main()
   //Menu loop, after running it returns the selection as the number presented on the menu
 
   vector<string> menu_options = {"PLAY", "SETTINGS", "EXIT"};
-  vector<string> menu_text = {"USE (UP KEY PLACE HOLDER) W & (DOWN KEY PLACE HOLDER) S TO NAVIGATE MENU", "USE ENTER TO CONFIRM SELECTION"};
+
+  string cursor_control_line = "CURSOR CONTROLS: " + string(1, CURSOR_UP) + " TO MOVE UP AND " + string(1, CURSOR_DOWN) + " FOR DOWN";
+  vector<string> menu_text = {"", "USE ENTER TO CONFIRM SELECTION"};
+  menu_text[0] = cursor_control_line;
   Menu m(menu_text, menu_options, t);
 
   //Signals the menu to run once regardless of whether there is input available
@@ -424,17 +429,17 @@ int main()
   
 
   switch (getInput()) {
-    case 's':
+    case 'w':
       m.moveCursor(-1);
       m.updateTerminal();
       t.draw();
       break;
-    case 'a':
+    case 's':
       m.moveCursor(1);
       m.updateTerminal();
       t.draw();
       break;
-    case 'e':
+    case '\n':
       user_decision = m.getSelection();
       menu_active = false;
       break;
@@ -450,14 +455,14 @@ int main()
 
   switch (user_decision)
   {
-  case 3:
+  case 1:
     t.clearGrid();
     playGame(snake, t, screen_size);
     break;
   case 2:
     cout << "Options";
     break;
-  case 1:
+  case 3:
     exit(0);
     break;
   }

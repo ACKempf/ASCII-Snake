@@ -73,7 +73,7 @@
     unsigned char last_chr = 0;
 
     //As long as there is available input, exhaustively collect input until there is no new input to be read
-    while (poll(fds, 1, 0)) std::cin >> last_chr;
+    while (poll(fds, 1, 0)) last_chr = std::cin.get();
 
     //Return the last character read before none was available
     return last_chr;
