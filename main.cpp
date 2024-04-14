@@ -22,8 +22,8 @@ char SNAKE_BODY_CHAR = '*';
 char GRID_BORDER = '#';
 
 //Pseudo-constants for gameplay
-int INITIAL_SPEED = 500;
-int MAX_SPEED = 200;
+int INITIAL_SPEED = 250;
+int MAX_SPEED = 50;
 int SPEED_MULTIPLIER = 90;
 bool SELF_COLLISION = true;
 
@@ -690,7 +690,7 @@ void playGame(Snake &snake, Terminal &t, ipair screen_size)
 
     // Sleep to control the speed of the game
     int clock = 0;
-    while(clock<=game_speed){
+    while(clock<=game_speed*10){
       input=getInput();
       if (input == 'w' || input == 'a' || input == 's' || input == 'd')
       {
