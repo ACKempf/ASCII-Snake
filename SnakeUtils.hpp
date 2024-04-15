@@ -67,6 +67,7 @@ CharStyle SNAKE_FOOD(false, false, false, false, 231, 232);
 CharStyle BARRIER(false, false, false, false, 231, 232);
 CharStyle POWERUP1(false, false, false, false, 231, 232);
 CharStyle POWERUP2(false, false, false, false, 231, 232);
+CharStyle SCOREBOARD(false, false, false, false, 231, 232);
 
 /*
   setBoundary takes the size of the screen and clips 1 off of both dimensions
@@ -423,6 +424,62 @@ class Menu
       return s_l;
     }
   };
+
+
+class ScoreBoard
+{
+  public:
+    ScoreBoard(Terminal& tin) : t(tin) {};
+
+    void updateTerminal() {
+      pushToTerminal();
+      return;
+    }
+
+    void scoreEvent(){
+      current_score++;
+      return;
+    }
+
+    void setSpeed(int spd){
+      current_speed = spd;
+      return;
+    }
+
+  private:
+    int current_score = 0;
+    int current_speed = 0;
+    Terminal& t;
+
+    //coordinates of the upper left corner and bottom right corner of the scoreboard
+    const string score_prefix = "SCORE / TOTAL-FOOD: ";
+    const string speed_prefix = "SPEED   (TILE/SEC): ";
+    const int center_line = t.findCenter().second;
+    //Roughly centers the text and finds the left justification line
+    const int left_justification_offset = -1*((score_prefix.size()+speed_prefix.size())/4);
+
+    void pushToTerminal()
+    {
+      string score_print = score_prefix+to_string(current_score);
+      string speed_print = speed_prefix+to_string(current_speed);
+      int current_column = center_line+left_justification_offset;
+
+      for (char c:score_print){
+        t.setChar(0, current_column, c, SCOREBOARD.bold, SCOREBOARD.italic, SCOREBOARD.underline, SCOREBOARD.blinking, SCOREBOARD.fg_color, SCOREBOARD.bg_color);
+        current_column++;
+      }
+
+      current_column = center_line+left_justification_offset;
+
+      for (char c:speed_print){
+        t.setChar(1, current_column, c, SCOREBOARD.bold, SCOREBOARD.italic, SCOREBOARD.underline, SCOREBOARD.blinking, SCOREBOARD.fg_color, SCOREBOARD.bg_color);
+        current_column++;
+      }
+
+      return;
+    };
+
+};
 
 //Creates the barrier surrounding the playable area according to the size of the screen
 void createGrid(ipair screen_size, Terminal &t)
@@ -800,7 +857,7 @@ void styleEditorMenu(Terminal &t)
   bool force_menu = true;
   bool active = true;
   vector<string> menu_text = {"STYLE EDITOR", "NAVIGATE UP & DOWN WITH 'w' & 's'", "PRESS ENTER TO SELECT AN OPTION TO EDIT & C TO CANCEL"};
-  vector<string> menu_options = {"SNAKE HEAD STYLE", "SNAKE BODY STYLE", "FOOD STYLE", "BARRIER STYLE", "MENU SELECTIONS STYLE", "MENU TEXT STYLE", "CURSOR STYLE", "SPEED POWERUP", "COLLISION POWERUP"};
+  vector<string> menu_options = {"SNAKE HEAD STYLE", "SNAKE BODY STYLE", "FOOD STYLE", "BARRIER STYLE", "MENU SELECTIONS STYLE", "MENU TEXT STYLE", "CURSOR STYLE", "SPEED POWERUP", "COLLISION POWERUP", "SCOREBOARD STYLE"};
   Menu m(menu_text, menu_options, t);
 
   while(active)
@@ -856,6 +913,8 @@ void styleEditorMenu(Terminal &t)
           case 9:
             styleInputMenu("EDITING COLLISION POWERUP STYLE", t, POWERUP2);
             break;
+          case 10:
+            styleInputMenu("EDITING SCOREBOARD STYLE", t, SCOREBOARD);
         }
     }
   }
@@ -965,7 +1024,7 @@ void gameplayEditorMenu(Terminal &t)
         switch(m.getSelection())
         {
           case 1:
-            intInputMenu("INITIAL GAME SPEED IN MILLISECONDS/FRAME", t, INITIAL_SPEED);
+            intInputMenu("INITIAL GAME SPEED IN MILLISECONDS/FRAME (1s=1000msec)", t, INITIAL_SPEED);
             break;
           case 2:
             intInputMenu("MAX POSSIBLE SPEED OF GAME IN MILLISECONDS/FRAME", t, MAX_SPEED);
@@ -1043,7 +1102,7 @@ void settingsEditorMenu(Terminal &t)
 
   Parameters: 1 Snake Reference, 1 Terminal Reference, And 1 pair representing the size of the screen
 */
-void playGame(Snake &snake, Terminal &t, ipair screen_size)
+void playGame(Snake &snake, Terminal &t, ipair screen_size, ScoreBoard &sb)
 {
   
   //Initialize random seed
@@ -1066,6 +1125,8 @@ void playGame(Snake &snake, Terminal &t, ipair screen_size)
   bool powerUpSpawned=false;
   while (alive)
   {
+
+    sb.updateTerminal();
 
     //Move the snake
     snake.move();
@@ -1132,6 +1193,10 @@ void playGame(Snake &snake, Terminal &t, ipair screen_size)
     //Check if the snake has eaten the food
     if (food.checkCollision(snake))
     {
+      //Tell scoreboard to update
+      sb.scoreEvent();
+      sb.setSpeed((1000/game_speed));
+      sb.updateTerminal();
       //Snake eats food, grow the snake
       //Add a new bodySegment to the snake's body at the position of the food
       snake.grow();
@@ -1172,7 +1237,10 @@ void playGame(Snake &snake, Terminal &t, ipair screen_size)
       if(input==PAUSE_KEY) 
       {
         pauseMenu("", t, alive);
+        if (alive){ //Prevents flicker when quitting to homescreen
         t.clearGrid();
+        createGrid(screen_size, t);
+        }
       }
       clock++;
       usleep(100);

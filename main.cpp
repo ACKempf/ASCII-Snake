@@ -88,12 +88,13 @@ int main()
   char startDirection = 'd';
 
   Snake snake(startX, startY, startDirection);
+  ScoreBoard sb(t);
 
   switch (user_decision)
   {
   case 1:
     t.clearGrid();
-    playGame(snake, t, screen_size);
+    playGame(snake, t, screen_size, sb);
     break;
   case 2:
     settingsEditorMenu(t);
