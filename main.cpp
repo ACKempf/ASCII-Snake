@@ -49,6 +49,7 @@ struct CharStyle
 CharStyle MENU_TEXT(false, false, false, false, 231, 232);
 CharStyle MENU_OPTION(false, false, false, false, 231, 232);
 CharStyle CURSOR(false, false, false, true, 220, 232);
+CharStyle SCOREBOARD(false, false, false, false, 231, 232);
 char CURSOR_CHAR = '>';
 
 CharStyle SNAKE_BODY(false, false, false, false, 231, 232);
@@ -209,6 +210,61 @@ class Menu
 
 };
 
+class ScoreBoard
+{
+  public:
+    ScoreBoard(Terminal& tin) : t(tin) {};
+
+    void updateTerminal() {
+      pushToTerminal();
+      return;
+    }
+
+    void scoreEvent(){
+      current_score++;
+      return;
+    }
+
+    void setSpeed(int spd){
+      current_speed = spd;
+      return;
+    }
+
+  private:
+    int current_score = 0;
+    int current_speed = 0;
+    Terminal& t;
+
+    //coordinates of the upper left corner and bottom right corner of the scoreboard
+    const string score_prefix = "SCORE / TOTAL-FOOD: ";
+    const string speed_prefix = "SPEED   (TILE/SEC): ";
+    const int center_line = t.findCenter().second;
+    //Roughly centers the text and finds the left justification line
+    const int left_justification_offset = -1*((score_prefix.size()+speed_prefix.size())/4);
+
+    void pushToTerminal()
+    {
+      string score_print = score_prefix+to_string(current_score);
+      string speed_print = speed_prefix+to_string(current_speed);
+      int current_column = center_line+left_justification_offset;
+
+      for (char c:score_print){
+        t.setChar(0, current_column, c, SCOREBOARD.bold, SCOREBOARD.italic, SCOREBOARD.underline, SCOREBOARD.blinking, SCOREBOARD.fg_color, SCOREBOARD.bg_color);
+        current_column++;
+      }
+
+      current_column = center_line+left_justification_offset;
+
+      for (char c:speed_print){
+        t.setChar(1, current_column, c, SCOREBOARD.bold, SCOREBOARD.italic, SCOREBOARD.underline, SCOREBOARD.blinking, SCOREBOARD.fg_color, SCOREBOARD.bg_color);
+        current_column++;
+      }
+
+      return;
+    };
+    
+};
+
 //Creates a menu to gather user input for settings purposes, prints a prompt
 void intInputMenu(string text, Terminal& t, int& to_set);
 void boolInputMenu(string text, Terminal& t, bool& to_set);
@@ -351,8 +407,9 @@ ipair setBoundary(ipair screen_size)
   return {rows, columns};
 }
 
-void playGame(Snake &snake, Terminal &t, ipair screensize);
+void playGame(Snake &snake, Terminal &t, ipair screensize, ScoreBoard& sb);
 void drawSnake();
+void displayHeader(Snake &snake, Terminal&t, ipair screensize);
 void createGrid(ipair screensize);
 bool checkBoundaryCollision(const Snake &snake, ipair screensize);
 bool checkSelfCollision(const Snake &snake);
@@ -475,12 +532,13 @@ int main()
   char startDirection = 'd';
 
   Snake snake(startX, startY, startDirection);
+  ScoreBoard sb(t);
 
   switch (user_decision)
   {
   case 1:
     t.clearGrid();
-    playGame(snake, t, screen_size);
+    playGame(snake, t, screen_size, sb);
     break;
   case 2:
     settingsEditorMenu(t);
@@ -624,7 +682,7 @@ bool checkBoundaryCollision(const Snake &snake, ipair screen_size)
   return false;
 }
 
-void playGame(Snake &snake, Terminal &t, ipair screen_size)
+void playGame(Snake &snake, Terminal &t, ipair screen_size, ScoreBoard &sb)
 {
   
   // Initialize random seed
@@ -640,6 +698,8 @@ void playGame(Snake &snake, Terminal &t, ipair screen_size)
 
   while (alive)
   {
+
+    sb.updateTerminal();
 
     // Move the snake
     snake.move();
@@ -670,6 +730,10 @@ void playGame(Snake &snake, Terminal &t, ipair screen_size)
     // Check if the snake has eaten the food
     if (headPos.first == food.row && headPos.second == food.col)
     {
+      //Tell scoreboard to update
+      sb.scoreEvent();
+      sb.setSpeed((1000/game_speed));
+      sb.updateTerminal();
       // Snake eats food, grow the snake
       // Add a new segment to the snake's body at the position of the food
       snake.grow();
@@ -688,6 +752,7 @@ void playGame(Snake &snake, Terminal &t, ipair screen_size)
       alive=false;
     }
 
+    // Seperate loop for parsing input irrespective of whether we are waiting for the next frame
     // Sleep to control the speed of the game
     int clock = 0;
     while(clock<=game_speed*10){
@@ -700,15 +765,17 @@ void playGame(Snake &snake, Terminal &t, ipair screen_size)
       if(input==PAUSE_KEY) 
       {
         pauseMenu("", t, alive);
+        //Prevents snake grid flicker before main menu
+        if (alive){
         t.clearGrid();
         createGrid(screen_size, t);
+        }
       }
       clock++;
       usleep(100);
     }
   }
 }
-
 
 //menu functions
 void pauseMenu(string text, Terminal& t, bool& game_state)
@@ -748,7 +815,7 @@ void pauseMenu(string text, Terminal& t, bool& game_state)
             return;
           case 2:
             game_state=false;
-            break;
+            return;
         }
     }
 
@@ -953,7 +1020,7 @@ void styleEditorMenu(Terminal &t)
   bool force_menu = true;
   bool active = true;
   vector<string> menu_text = {"STYLE EDITOR", "NAVIGATE UP & DOWN WITH 'w' & 's'", "PRESS ENTER TO SELECT AN OPTION TO EDIT & C TO CANCEL"};
-  vector<string> menu_options = {"SNAKE HEAD STYLE", "SNAKE BODY STYLE", "FOOD STYLE", "BARRIER STYLE", "MENU SELECTIONS STYLE", "MENU TEXT STYLE", "CURSOR STYLE"};
+  vector<string> menu_options = {"SNAKE HEAD STYLE", "SNAKE BODY STYLE", "FOOD STYLE", "BARRIER STYLE", "MENU SELECTIONS STYLE", "MENU TEXT STYLE", "CURSOR STYLE", "SCOREBOARD STYLE"};
   Menu m(menu_text, menu_options, t);
 
   while(active)
@@ -1002,6 +1069,9 @@ void styleEditorMenu(Terminal &t)
             break;
           case 7:
             styleInputMenu("EDITING CURSOR STYLE", t, CURSOR);
+            break;
+          case 8:
+            styleInputMenu("EDITING SCOREBOARD STYLE", t, SCOREBOARD);
             break;
         }
     }
@@ -1106,7 +1176,7 @@ void gameplayEditorMenu(Terminal &t)
         switch(m.getSelection())
         {
           case 1:
-            intInputMenu("INITIAL GAME SPEED IN MILLISECONDS/FRAME", t, INITIAL_SPEED);
+            intInputMenu("INITIAL GAME SPEED IN MILLISECONDS/FRAME (1s=1000msec)", t, INITIAL_SPEED);
             break;
           case 2:
             intInputMenu("MAX POSSIBLE SPEED OF GAME IN MILLISECONDS/FRAME", t, MAX_SPEED);
