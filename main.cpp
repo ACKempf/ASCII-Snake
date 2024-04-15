@@ -20,17 +20,18 @@ char SNAKE_HEAD_LEFT = '<';
 char FOOD_CHAR = '*';
 char SNAKE_BODY_CHAR = '*';
 char GRID_BORDER = '#';
-
+char POWERUP_1_CHAR = '+';
+char POWERUP_2_CHAR = 'x';
 //Pseudo-constants for gameplay
-int INITIAL_SPEED = 250;
+int INITIAL_SPEED = 125;
 int MAX_SPEED = 50;
 int SPEED_MULTIPLIER = 90;
 bool SELF_COLLISION = true;
-
+bool ENABLE_POWERUPS = true;
+int POWERUP_TIME = 10;
+int POWERUP_SPAWN_TIME = 30;
 //Pseudo-constant for controls
 char PAUSE_KEY = 'p';
-
-int HIGHEST_SCORE = 0;
 
 struct CharStyle
 {
@@ -51,13 +52,14 @@ struct CharStyle
 CharStyle MENU_TEXT(false, false, false, false, 231, 232);
 CharStyle MENU_OPTION(false, false, false, false, 231, 232);
 CharStyle CURSOR(false, false, false, true, 220, 232);
-CharStyle SCOREBOARD(false, false, false, false, 231, 232);
 char CURSOR_CHAR = '>';
 
 CharStyle SNAKE_BODY(false, false, false, false, 231, 232);
 CharStyle SNAKE_HEAD(false, false, false, false, 231, 232);
 CharStyle SNAKE_FOOD(false, false, false, false, 231, 232);
 CharStyle BARRIER(false, false, false, false, 231, 232);
+CharStyle POWERUP1(false, false, false, false, 231, 232);
+CharStyle POWERUP2(false, false, false, false, 231, 232);
 
 /*
 Menu Class:
@@ -212,64 +214,6 @@ class Menu
 
 };
 
-class ScoreBoard
-{
-  public:
-    ScoreBoard(Terminal& tin, int& hs) : t(tin), high_score(hs) {};
-
-    void updateTerminal() {
-      pushToTerminal();
-      return;
-    }
-
-    void scoreEvent(){
-      current_score++;
-      //A quick line that keeps track of the highest score in a session
-      if (current_score>high_score) {high_score = current_score;}
-      return;
-    }
-
-    void setSpeed(int spd){
-      current_speed = spd;
-      return;
-    }
-
-  private:
-    int current_score = 0;
-    int current_speed = 0;
-    int& high_score;
-    Terminal& t;
-
-    //coordinates of the upper left corner and bottom right corner of the scoreboard
-    const string score_prefix = "SCORE / TOTAL-FOOD: ";
-    const string speed_prefix = "SPEED   (TILE/SEC): ";
-    const int center_line = t.findCenter().second;
-    //Roughly centers the text and finds the left justification line
-    const int left_justification_offset = -1*((score_prefix.size()+speed_prefix.size())/4);
-
-    void pushToTerminal()
-    {
-      string score_print = score_prefix+to_string(current_score);
-      string speed_print = speed_prefix+to_string(current_speed);
-      int current_column = center_line+left_justification_offset;
-
-      for (char c:score_print){
-        t.setChar(0, current_column, c, SCOREBOARD.bold, SCOREBOARD.italic, SCOREBOARD.underline, SCOREBOARD.blinking, SCOREBOARD.fg_color, SCOREBOARD.bg_color);
-        current_column++;
-      }
-
-      current_column = center_line+left_justification_offset;
-
-      for (char c:speed_print){
-        t.setChar(1, current_column, c, SCOREBOARD.bold, SCOREBOARD.italic, SCOREBOARD.underline, SCOREBOARD.blinking, SCOREBOARD.fg_color, SCOREBOARD.bg_color);
-        current_column++;
-      }
-
-      return;
-    };
-    
-};
-
 //Creates a menu to gather user input for settings purposes, prints a prompt
 void intInputMenu(string text, Terminal& t, int& to_set);
 void boolInputMenu(string text, Terminal& t, bool& to_set);
@@ -281,130 +225,143 @@ void settingsEditorMenu(Terminal &t);
 
 /*
     Snake Class:
-    This class represents a snake in a 2D grid-based game. The snake can move in four directions: up, down, left, and right.
-    It grows by adding segments to its body when it consumes food. The class provides functions to control
-    the snake's movement, change its direction, retrieve its body segments, and make it grow.
+    This class represents the snake in the terminal Grid. The snake can move up, down, left, right, 
+    and grows whenever it 'eats' (collides with) food. The Snake class provides functions that can control
+    the snake's movement, change its direction, retrieve its body, and increase its size.
 */
 class Snake
 {
 private:
-  pvector body;      // Vector to store the coordinates of the snake's body segments
-  char direction;    // Current direction of the snake ('a' for left, 'd' for right, 'w' for up, 's' for down)
-  ipair prevTailPos; // Previous position of the tail segment
+  pvector body;      //Vector to store the coordinates of the snake's body bodySegments
+  char direction;    //Current direction of the snake ('a' for left, 'd' for right, 'w' for up, 's' for down)
+  ipair prevTailPosition; //Previous position of the tail segment
 
 public:
-  // Constructor to initialize the snake with a starting position and direction
+  /*
+    Constructor for Snake class
+
+    Params: 2 integers, 1 character
+    int init_row : initial row for spawning
+    int init_column : initial column for spawning
+    char init_direction : initial direction of the snake
+    */
   Snake(int init_row, int init_column, char init_direction)
   {
-    // Initialize the snake with a single segment at the starting position
+    //Initialize the snake with a single body segment at the starting position
     body.push_back({init_row, init_column});
     direction = init_direction;
-    prevTailPos = {init_row, init_column};
+    prevTailPosition = {init_row, init_column};
   }
 
-  // Function to move the snake in the current direction
+  /*
+    //move definition here
+  */
   void move()
   {
-    // Calculate the offset for the new head position based on the current direction
+    //Calculate the offset for the new head position based on the current direction
     int row_offset = 0, column_offset = 0;
     switch (direction)
     {
-    case 'a': // Left
+    case 'a': //Left
       row_offset = 0;
       column_offset = -1;
       break;
-    case 'd': // Right
+    case 'd': //Right
       row_offset = 0;
       column_offset = 1;
       break;
-    case 'w': // Up
+    case 'w': //Up
       row_offset = -1;
       column_offset = 0;
       break;
-    case 's': // Down
+    case 's': //Down
       row_offset = 1;
       column_offset = 0;
       break;
     }
 
-    // Update the previous position of the tail segment
-    prevTailPos = body.back();
+    //Update the previous position of the end/tail segment of the body
+    prevTailPosition = body.back();
 
-    // Update the positions of the body segments to follow the head
+    //Update the coordinates of the body segments to follow the head
     for (size_t i = body.size() - 1; i > 0; --i)
     {
       body[i] = body[i - 1];
     }
 
-    // Calculate the new head position
+    //Calculate the new position of the head
     ipair &head = body.front();
     head.first += row_offset;
     head.second += column_offset;
   }
 
-  // Function to change the direction of the snake
+  /*
+    //changeDirection definition here
+  */
   void changeDirection(char new_direction)
   {
     //Messy ifs, Only change direction is it is not opposite to the current direciton
     if (!((new_direction == 'w' && direction == 's')||(new_direction == 's' && direction == 'w'))){
       if (!((new_direction == 'a' && direction == 'd')||(new_direction == 'd' && direction == 'a'))) {
-        // Update the direction
+        //Update the direction
         direction = new_direction;
       }
     }
     
   }
 
-  // Getter function to retrieve the snake's body
+  //Function to retrieve the snake's body
   const pvector &getBody() const
   {
     return body;
   }
 
-  // Getter function to retrieve the previous position of the tail segment
-  ipair getPrevTailPos() const
+  //Function to retrieve the previous position of the tail bodySegment
+  ipair getPrevTailPosition() const
   {
-    return prevTailPos;
+    return prevTailPosition;
   }
 
-  // Getter function to retrieve the current direction of the snake
+  //Function to retrieve the current direction of the snake
   char getDirection() const
   {
     return direction;
   }
 
-  // Function to make the snake grow by adding a new segment
+  //Function to make the snake grow by adding a new bodySegment
   void grow()
   {
-    // Get the last segment of the snake's body
-    const ipair &tailSegment = body.back();
+    //last/tail segment of the body.
+    const ipair &tailbodySegment = body.back();
 
-    // Calculate the position for the new segment
-    int new_row = tailSegment.first;
-    int new_column = tailSegment.second;
+    //Calculate the coordinates for the new body segment
+    int new_row = tailbodySegment.first;
+    int new_column = tailbodySegment.second;
 
-    // Add the new segment in a position adjacent to the tail segment, depending on the direction
+    //Add the new body segment in a position adjacent to the tail bodySegment, depending on the direction
     switch (direction)
     {
-    case 'a':    // Left
-      new_column += 1; // Move the new segment one column to the left
+    case 'a':    
+      new_column += 1; //Move the new body segment one column to the left
       break;
-    case 'd':    // Right
-      new_column -= 1; // Move the new segment one column to the right
+    case 'd':    
+      new_column -= 1; //Move the new body segment one column to the right
       break;
-    case 'w':    // Up
-      new_row += 1; // Move the new segment one row up
+    case 'w':   
+      new_row += 1; //Move the new body segment one row up
       break;
-    case 's':    // Down
-      new_row -= 1; // Move the new segment one row down
+    case 's':   
+      new_row -= 1; //Move the new body segment one row down
       break;
     }
 
-    // Add the new segment to the end of the body vector, extending the tail
+    //Add the new body segment to the end of the snake body vector, effectively extending the tail/end.
     body.push_back({new_row, new_column});
   }
 };
-
+/*
+  //definition fo setBoundary here
+*/
 ipair setBoundary(ipair screen_size)
 {
   int rows = screen_size.first - 1;
@@ -412,46 +369,72 @@ ipair setBoundary(ipair screen_size)
   return {rows, columns};
 }
 
-void playGame(Snake &snake, Terminal &t, ipair screensize, ScoreBoard& sb);
+void playGame(Snake &snake, Terminal &t, ipair screensize);
 void drawSnake();
-void displayHeader(Snake &snake, Terminal&t, ipair screensize);
 void createGrid(ipair screensize);
 bool checkBoundaryCollision(const Snake &snake, ipair screensize);
-bool checkSelfCollision(const Snake &snake);
+bool checkBodyCollision(const Snake &snake);
 
 /*
     Food Struct:
-    represents the food in the snake game. It has a position defined by row and column coordinates.
-    The spawn method randomly places the food within the grid boundaries. The checkCollision method is used to determine if the
-    food collides with the snake by comparing its position with the positions of the snake's body segments.
+    Represents 'food' in the snake game. It has a position defined by row and column coordinates.
+    The spawn method randomly places the food within the grid boundaries. checkCollision method determines if the
+    food collides with the snake by comparing its coordinates with the coordinates of the snake's body segments.
 */
 struct Food
 {
   int row = -1;
   int col = -1;
-  // Method to spawn food at a random location on the grid
-  void spawn(ipair boundary)
+  //Method to spawn food at a random location on the grid
+  void spawn(ipair boundary, Snake &snake)
   {
-    // Generate random row and column within the grid boundaries
-    row = rand() % (boundary.first - 4) + 4;
-    col = rand() % (boundary.second - 1) + 1;
+    //Generate random row and column within the grid boundaries
+    do{
+      row = rand() % (boundary.first - 4) + 4;
+      col = rand() % (boundary.second - 1) + 1;
+    }while(checkCollision(snake));
   }
 
-  // Method to check the food collision with the snake
+  //Method to check the food collision with the snake
   bool checkCollision(const Snake &snake) const
   {
-    // Iterate over the snake's body segments and check if any segment matches the food's position
-    for (const ipair &segment : snake.getBody())
+    //Iterate over the snake's body bodySegments and check if any bodySegment matches the food's position
+    for (const ipair &bodySegment : snake.getBody())
     {
-      if (row == segment.first && col == segment.second)
+      if (row == bodySegment.first && col == bodySegment.second)
       {
-        return true; // Collision detected
+        return true; //Collision detected
       }
     }
-    return false; // No collision
+    return false; //No collision
   }
 };
+struct Powerups
+{
+  int row = -1;
+  int col =-1;
+  int type;
 
+  void spawn(ipair boundary, Snake &snake){
+    do{
+      row = rand() % (boundary.first - 4) + 4;
+      col = rand() % (boundary.second - 1) + 1;
+      type = rand() % 2 + 1;
+    }while(checkCollision(snake));
+  }
+  bool checkCollision(const Snake &snake) const
+  {
+    //Iterate over the snake's body bodySegments and check if any bodySegment matches the Powerup's position
+    for (const ipair &bodySegment : snake.getBody())
+    {
+      if (row == bodySegment.first && col == bodySegment.second)
+      {
+        return true; //Collision detected
+      }
+    }
+    return false; //No collision
+  }
+};
 
 int main()
 {
@@ -496,12 +479,11 @@ int main()
   vector<string> menu_options = {"PLAY", "SETTINGS", "EXIT"};
 
   string cursor_control_line = "CURSOR CONTROLS: " + string(1, CURSOR_UP) + " TO MOVE UP AND " + string(1, CURSOR_DOWN) + " FOR DOWN";
-  vector<string> menu_text = {"", "", "USE ENTER TO CONFIRM SELECTION"};
-  menu_text[1] = cursor_control_line;
+  vector<string> menu_text = {"", "USE ENTER TO CONFIRM SELECTION"};
+  menu_text[0] = cursor_control_line;
+  Menu m(menu_text, menu_options, t);
 
   while(true){
-  if (HIGHEST_SCORE>0) menu_text[0]= ("HIGHEST SCORE: "+to_string(HIGHEST_SCORE));
-  Menu m(menu_text, menu_options, t);
   //Signals the menu to run once regardless of whether there is input available
   bool init_run = true;
   int user_decision;
@@ -538,13 +520,12 @@ int main()
   char startDirection = 'd';
 
   Snake snake(startX, startY, startDirection);
-  ScoreBoard sb(t, HIGHEST_SCORE);
 
   switch (user_decision)
   {
   case 1:
     t.clearGrid();
-    playGame(snake, t, screen_size, sb);
+    playGame(snake, t, screen_size);
     break;
   case 2:
     settingsEditorMenu(t);
@@ -556,7 +537,7 @@ int main()
   }
 }
 
-// Changes grid based on size of screen, always square.
+//Changes grid based on size of screen,
 void createGrid(ipair screen_size, Terminal &t)
 {
   ipair boundary = setBoundary(screen_size);
@@ -585,29 +566,28 @@ void createGrid(ipair screen_size, Terminal &t)
 
 /*
     drawSnake Function:
-    This function is responsible for drawing the snake on a terminal screen. It takes the snake object and a terminal object as parameters.
-    It iterates through the snake's body segments, drawing each segment using a specified character for the body.
-    It also draws the head of the snake according to its direction, using different characters for each direction.
-    The function erases the previous position of the snake's tail segment and then draws the updated grid with the snake.
+    This function draws the Snake onto the grid. Params: Snake and Terminal objects.
+    Iterates through the body bodySegments of snake, and draws each bodySegment using the specified body character.
+    The function erases the previous position of the snake's tail bodySegment and then draws the updated grid with the snake.
 */
 void drawSnake(const Snake &snake, Terminal &t)
 {
-  // Get the body of the snake
+  //Get the body of the snake
   const pvector &body = snake.getBody();
-  // Define the characters to represent the snake's body
+  //Define the characters to represent the snake's body
   char headChar;
   switch (snake.getDirection())
   {
-  case 'a': // Left
+  case 'a': 
     headChar = SNAKE_HEAD_LEFT;
     break;
-  case 'd': // Right
+  case 'd': 
     headChar = SNAKE_HEAD_RIGHT;
     break;
-  case 'w': // Up
+  case 'w': 
     headChar = SNAKE_HEAD_UP;
     break;
-  case 's': // Down
+  case 's':
     headChar = SNAKE_HEAD_DOWN;
     break;
   default: //Raise error if invalid head direction is found
@@ -615,44 +595,43 @@ void drawSnake(const Snake &snake, Terminal &t)
     throw logic_error("Invalid head direction while drawing snake");
   }
 
-  //Print body segments (if there are any)
-  for (const ipair &segment:body) {
-    t.setChar(segment.first, segment.second, SNAKE_BODY_CHAR, SNAKE_BODY.bold, SNAKE_BODY.italic, SNAKE_BODY.underline, SNAKE_BODY.blinking, SNAKE_BODY.fg_color, SNAKE_BODY.bg_color);
+  //Loop to print body body segments (if there are any)
+  for (const ipair &bodySegment:body) {
+    t.setChar(bodySegment.first, bodySegment.second, SNAKE_BODY_CHAR, SNAKE_BODY.bold, SNAKE_BODY.italic, SNAKE_BODY.underline, SNAKE_BODY.blinking, SNAKE_BODY.fg_color, SNAKE_BODY.bg_color);
   }
   
-  // Draw the snake's head
-  const ipair& headPos = body.front();
-  t.setChar(headPos.first, headPos.second, headChar, SNAKE_HEAD.bold, SNAKE_HEAD.italic, SNAKE_HEAD.underline, SNAKE_HEAD.blinking, SNAKE_HEAD.fg_color, SNAKE_HEAD.bg_color);
+  //Draw the snake's head
+  const ipair& headPosition = body.front();
+  t.setChar(headPosition.first, headPosition.second, headChar, SNAKE_HEAD.bold, SNAKE_HEAD.italic, SNAKE_HEAD.underline, SNAKE_HEAD.blinking, SNAKE_HEAD.fg_color, SNAKE_HEAD.bg_color);
 
-  // Erase the previous position of the tail segment
-  ipair prevTailPos = snake.getPrevTailPos();
-  t.setChar(prevTailPos.first, prevTailPos.second, ' ');
+  //Erase the previous position of the tail bodySegment
+  ipair prevTailPosition = snake.getPrevTailPosition();
+  t.setChar(prevTailPosition.first, prevTailPosition.second, ' ');
 
-  // Draw the updated grid with the snake
+  //Draw the updated grid with the snake
   t.draw();
 }
 
 /*
-    checkSelfCollision Function:
-    This function checks for self-collision of the snake, meaning if the snake's head collides with any
-    part of its body. It takes the snake object as a parameter. It iterates through the snake's body
-    segments starting from the second segment and compares their coordinates with the head's coordinates.
-    If a match is found, indicating a collision, it returns true. Otherwise, it returns false, indicating
-    no collision.
+    checkBodyCollision Function:
+    This function checks to see if the snake head collides with its body. It takes the snake object as a 
+    parameter, and iterates through the body bodySegments (starting from the second bodySegment) then compares the coordinates 
+    with the head's coordinates. If any of them match (indicating collision at those coordinates), it returns true. 
+    Otherwise, it returns false, indicating there is no collision.
 */
 
-bool checkSelfCollision(const Snake &snake)
+bool checkBodyCollision(const Snake &snake)
 {
-  // Get the body of the snake
+  //Get body of the snake using getBody
   const pvector &body = snake.getBody();
 
-  // Get the coordinates of the head
+  //Get the coordinates of the head
   ipair head = body.front();
 
-  // Iterate over the body segments starting from the third segment
+  //Iterate over the body bodySegments starting from the third bodySegment
   for (auto i = body.begin() + 1; i != body.end(); i++)
   {
-    // If the coordinates of the current segment match the head's coordinates, return true
+    //If the coordinates of the current bodySegment match the head's coordinates, return true
     if (*i == head)
     {
       //Only report self collision if SELF_COLLISION flag is true
@@ -662,7 +641,7 @@ bool checkSelfCollision(const Snake &snake)
     }
   }
 
-  // No collision detected
+  //No collision detected
   return false;
 }
 
@@ -676,112 +655,158 @@ bool checkSelfCollision(const Snake &snake)
 */
 bool checkBoundaryCollision(const Snake &snake, ipair screen_size)
 {
-  // Get the coordinates of the head
+  //Get the coordinates of the head
   ipair head = snake.getBody().front();
   ipair boundary = setBoundary(screen_size);
-  // Check if the head's coordinates exceed the boundaries
+  //Check if the head's coordinates exceed the boundaries
   if (head.first == 3 || head.first == boundary.first || head.second == 0 || head.second == boundary.second)
   {
-    return true; // Collision detected
+    return true; //Collision detected
   }
-  // No collision detected
+  //No collision detected
   return false;
 }
-
-void playGame(Snake &snake, Terminal &t, ipair screen_size, ScoreBoard &sb)
+/*
+  //define playGame function
+*/
+void playGame(Snake &snake, Terminal &t, ipair screen_size)
 {
   
-  // Initialize random seed
+  //Initialize random seed
   srand(time(NULL));
   Food food;
+  Powerups powerup;
   int game_speed = INITIAL_SPEED;
   ipair boundary = setBoundary(screen_size);
-  int prevRow = -1, prevCol = -1; // Initialize previous position
+  int prevRow = -1, prevCol = -1; //Initialize previous position
   createGrid(screen_size, t);
-
   bool alive = true;
   char input = getInput();
-
+  bool activePowerup = false;
+  bool powerupActive = false;
+  int powerupStartTime;
+  int powerupCurrentTime;
+  int elaspedPowerUpTime;
+  int powerUpCompleteTime;
+  int currentTime;
+  bool powerUpSpawned=false;
   while (alive)
   {
 
-    sb.updateTerminal();
-
-    // Move the snake
+    //Move the snake
     snake.move();
 
-    // Check if the food needs to be respawned
+    //Check if the food needs to be respawned
     if (food.row == -1)
     {
-      food.spawn(boundary);
+      food.spawn(boundary, snake);
     }
 
-    // Clear the previous position of the snake's head
+    if (ENABLE_POWERUPS == true) {
+    //Check if the power-up needs to be respawned
+      if((powerup.row == -1) || (((currentTime - powerUpCompleteTime) > POWERUP_SPAWN_TIME) && (!powerUpSpawned))){
+        powerup.spawn(boundary, snake);
+        powerUpSpawned = true;
+        //Draw the power-up
+        char powerupChar;
+        if (powerup.type == 1) {
+          powerupChar = POWERUP_1_CHAR; //Speed power-up symbol
+          t.setChar(powerup.row, powerup.col, powerupChar, POWERUP1.bold, POWERUP1.italic, POWERUP1.underline, POWERUP1.blinking, POWERUP1.fg_color, POWERUP1.bg_color);
+        } 
+        else if (powerup.type == 2) {
+          powerupChar = POWERUP_2_CHAR; //No-collision power-up symbol
+          t.setChar(powerup.row, powerup.col, powerupChar, POWERUP2.bold, POWERUP2.italic, POWERUP2.underline, POWERUP2.blinking, POWERUP2.fg_color, POWERUP2.bg_color);
+        }
+      }
+
+      //Check for collision with power-up
+      if (powerup.checkCollision(snake)) {
+        if(!activePowerup){
+          if (powerup.type == 1) {
+            game_speed *= 2;
+            activePowerup = true;
+            powerupStartTime = time(NULL);
+            powerUpSpawned = false;
+          } 
+          else if(powerup.type == 2) {
+            SELF_COLLISION = false;
+            activePowerup = true;
+            powerupStartTime = time(NULL);
+            powerUpSpawned = false;
+          }
+        }
+      t.setChar(powerup.row, powerup.col, ' ');
+      }
+    }
+
+    //Clear the previous position of the snake's head
     if (prevRow != -1 && prevCol != -1)
     {
       t.setChar(prevRow, prevCol, ' ');
     }
-
-    // Draw the food
+    //draw food
     t.setChar(food.row, food.col, FOOD_CHAR, SNAKE_FOOD.bold, SNAKE_FOOD.italic, SNAKE_FOOD.underline, SNAKE_FOOD.blinking, SNAKE_FOOD.fg_color, SNAKE_FOOD.bg_color);
 
-    // Draw the snake
+    //Draw the snake
     drawSnake(snake, t);
 
-    // Get the new position of the snake's head
-    ipair headPos = snake.getBody().front();
-    prevRow = headPos.first;
-    prevCol = headPos.second;
+    //Get the new position of the snake's head
+    ipair headPosition = snake.getBody().front();
+    prevRow = headPosition.first;
+    prevCol = headPosition.second;
 
-    // Check if the snake has eaten the food
-    if (headPos.first == food.row && headPos.second == food.col)
+    //Check if the snake has eaten the food
+    if (food.checkCollision(snake))
     {
-      //Tell scoreboard to update
-      sb.scoreEvent();
-      sb.setSpeed((1000/game_speed));
-      sb.updateTerminal();
-      // Snake eats food, grow the snake
-      // Add a new segment to the snake's body at the position of the food
+      //Snake eats food, grow the snake
+      //Add a new bodySegment to the snake's body at the position of the food
       snake.grow();
-      // Respawn food
-      food.spawn(boundary);
-      // Increase game speed & check if game speed is below max speed.
+      //Respawn food
+      food.spawn(boundary, snake);
+      //Increase game speed & check if game speed is below max speed.
       if (game_speed>MAX_SPEED){
       game_speed = int(game_speed*(float(SPEED_MULTIPLIER)/100.0));
       } else game_speed=MAX_SPEED;
     }
-
-    // Check for collisions after the snake has moved
-    if (checkSelfCollision(snake) || checkBoundaryCollision(snake, screen_size))
+    if(activePowerup)
     {
-      // Handle collision (e.g., end the game)
+      powerupCurrentTime = time(NULL);
+      elaspedPowerUpTime = powerupCurrentTime - powerupStartTime;
+      if(elaspedPowerUpTime > POWERUP_TIME){
+        activePowerup = false;
+        if(powerup.type == 1) game_speed /= 2;
+        else if(powerup.type == 2) SELF_COLLISION = true;
+        powerUpCompleteTime = time(NULL);
+      }
+    }
+    //Check for collisions after the snake has moved
+    if (checkBodyCollision(snake) || checkBoundaryCollision(snake, screen_size))
+    {
+      //Handle collision (e.g., end the game)
       alive=false;
     }
-
-    // Seperate loop for parsing input irrespective of whether we are waiting for the next frame
-    // Sleep to control the speed of the game
+    currentTime = time(NULL);
+    //Sleep to control the speed of the game
     int clock = 0;
     while(clock<=game_speed*10){
       input=getInput();
       if (input == 'w' || input == 'a' || input == 's' || input == 'd')
       {
-        // Change snake direction based on user input
+        //Change snake direction based on user input
         snake.changeDirection(input);
       }
       if(input==PAUSE_KEY) 
       {
         pauseMenu("", t, alive);
-        //Prevents snake grid flicker before main menu
-        if (alive){
         t.clearGrid();
         createGrid(screen_size, t);
-        }
       }
       clock++;
       usleep(100);
     }
   }
 }
+
 
 //menu functions
 void pauseMenu(string text, Terminal& t, bool& game_state)
@@ -821,7 +846,7 @@ void pauseMenu(string text, Terminal& t, bool& game_state)
             return;
           case 2:
             game_state=false;
-            return;
+            break;
         }
     }
 
@@ -1026,7 +1051,7 @@ void styleEditorMenu(Terminal &t)
   bool force_menu = true;
   bool active = true;
   vector<string> menu_text = {"STYLE EDITOR", "NAVIGATE UP & DOWN WITH 'w' & 's'", "PRESS ENTER TO SELECT AN OPTION TO EDIT & C TO CANCEL"};
-  vector<string> menu_options = {"SNAKE HEAD STYLE", "SNAKE BODY STYLE", "FOOD STYLE", "BARRIER STYLE", "MENU SELECTIONS STYLE", "MENU TEXT STYLE", "CURSOR STYLE", "SCOREBOARD STYLE"};
+  vector<string> menu_options = {"SNAKE HEAD STYLE", "SNAKE BODY STYLE", "FOOD STYLE", "BARRIER STYLE", "MENU SELECTIONS STYLE", "MENU TEXT STYLE", "CURSOR STYLE"};
   Menu m(menu_text, menu_options, t);
 
   while(active)
@@ -1075,9 +1100,6 @@ void styleEditorMenu(Terminal &t)
             break;
           case 7:
             styleInputMenu("EDITING CURSOR STYLE", t, CURSOR);
-            break;
-          case 8:
-            styleInputMenu("EDITING SCOREBOARD STYLE", t, SCOREBOARD);
             break;
         }
     }
@@ -1182,7 +1204,7 @@ void gameplayEditorMenu(Terminal &t)
         switch(m.getSelection())
         {
           case 1:
-            intInputMenu("INITIAL GAME SPEED IN MILLISECONDS/FRAME (1s=1000msec)", t, INITIAL_SPEED);
+            intInputMenu("INITIAL GAME SPEED IN MILLISECONDS/FRAME", t, INITIAL_SPEED);
             break;
           case 2:
             intInputMenu("MAX POSSIBLE SPEED OF GAME IN MILLISECONDS/FRAME", t, MAX_SPEED);
