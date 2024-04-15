@@ -30,6 +30,8 @@ bool SELF_COLLISION = true;
 //Pseudo-constant for controls
 char PAUSE_KEY = 'p';
 
+int HIGHEST_SCORE = 0;
+
 struct CharStyle
 {
   //Boolean style values
@@ -213,7 +215,7 @@ class Menu
 class ScoreBoard
 {
   public:
-    ScoreBoard(Terminal& tin) : t(tin) {};
+    ScoreBoard(Terminal& tin, int& hs) : t(tin), high_score(hs) {};
 
     void updateTerminal() {
       pushToTerminal();
@@ -222,6 +224,8 @@ class ScoreBoard
 
     void scoreEvent(){
       current_score++;
+      //A quick line that keeps track of the highest score in a session
+      if (current_score>high_score) {high_score = current_score;}
       return;
     }
 
@@ -233,6 +237,7 @@ class ScoreBoard
   private:
     int current_score = 0;
     int current_speed = 0;
+    int& high_score;
     Terminal& t;
 
     //coordinates of the upper left corner and bottom right corner of the scoreboard
@@ -491,11 +496,12 @@ int main()
   vector<string> menu_options = {"PLAY", "SETTINGS", "EXIT"};
 
   string cursor_control_line = "CURSOR CONTROLS: " + string(1, CURSOR_UP) + " TO MOVE UP AND " + string(1, CURSOR_DOWN) + " FOR DOWN";
-  vector<string> menu_text = {"", "USE ENTER TO CONFIRM SELECTION"};
-  menu_text[0] = cursor_control_line;
-  Menu m(menu_text, menu_options, t);
+  vector<string> menu_text = {"", "", "USE ENTER TO CONFIRM SELECTION"};
+  menu_text[1] = cursor_control_line;
 
   while(true){
+  if (HIGHEST_SCORE>0) menu_text[0]= ("HIGHEST SCORE: "+to_string(HIGHEST_SCORE));
+  Menu m(menu_text, menu_options, t);
   //Signals the menu to run once regardless of whether there is input available
   bool init_run = true;
   int user_decision;
@@ -532,7 +538,7 @@ int main()
   char startDirection = 'd';
 
   Snake snake(startX, startY, startDirection);
-  ScoreBoard sb(t);
+  ScoreBoard sb(t, HIGHEST_SCORE);
 
   switch (user_decision)
   {
