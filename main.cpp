@@ -757,10 +757,7 @@ void playGame(Snake &snake, Terminal &t, ipair screen_size, ScoreBoard &sb)
     }
 
     // Clear the previous position of the snake's head
-    if (prevRow != -1 && prevCol != -1)
-    {
-      t.setChar(prevRow, prevCol, ' ');
-    }
+  
 
     // Draw the food
     t.setChar(food.row, food.col, FOOD_CHAR, SNAKE_FOOD.bold, SNAKE_FOOD.italic, SNAKE_FOOD.underline, SNAKE_FOOD.blinking, SNAKE_FOOD.fg_color, SNAKE_FOOD.bg_color);
@@ -769,12 +766,10 @@ void playGame(Snake &snake, Terminal &t, ipair screen_size, ScoreBoard &sb)
     drawSnake(snake, t);
 
     // Get the new position of the snake's head
-    ipair headPos = snake.getBody().front();
-    prevRow = headPos.first;
-    prevCol = headPos.second;
+
 
     // Check if the snake has eaten the food
-    if (headPos.first == food.row && headPos.second == food.col)
+    if (food.checkCollision(snake))
     {
       //Tell scoreboard to update
       sb.scoreEvent();
