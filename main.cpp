@@ -2,17 +2,16 @@
 #include <vector>
 #include <unistd.h>
 #include <exception>
+#include <random>
 #include "TControl.hpp"
 
 using namespace std;
-//Some type aliases for readability
-using ipair = pair<int, int>;
-using pvector = vector<pair<int, int>>;
+using ipair = pair<int, int>; //Type alias for integer pairs
+using pvector = vector<pair<int, int>>; //Type alias for vectors containing integer pairs
 
-//Pseudo-constants for various things
+//Character defaults
 char CURSOR_UP = 'w';
 char CURSOR_DOWN = 's';
-
 char SNAKE_HEAD_UP = '^';
 char SNAKE_HEAD_DOWN = 'v';
 char SNAKE_HEAD_RIGHT = '>';
@@ -20,18 +19,19 @@ char SNAKE_HEAD_LEFT = '<';
 char FOOD_CHAR = '*';
 char SNAKE_BODY_CHAR = '*';
 char GRID_BORDER = '#';
-
-//Pseudo-constants for gameplay
-int INITIAL_SPEED = 250;
-int MAX_SPEED = 50;
-int SPEED_MULTIPLIER = 90;
-bool SELF_COLLISION = true;
-
-//Pseudo-constant for controls
+char CURSOR_CHAR = '@';
 char PAUSE_KEY = 'p';
 
-int HIGHEST_SCORE = 0;
+//Gameplay defaults
+int INITIAL_SPEED = 200;
+int MAX_SPEED = 50;
+int SPEED_MULTIPLIER = 85;
+bool SELF_COLLISION = true;
+int HIGHEST_SCORE = 0; //Initialize highest score w/value 0
 
+/*
+The CharStyle struct presents a cleaner way to store format presets
+*/
 struct CharStyle
 {
   //Boolean style values
@@ -48,16 +48,17 @@ struct CharStyle
 };
 
 //Menu style presets
-CharStyle MENU_TEXT(false, false, false, false, 231, 232);
-CharStyle MENU_OPTION(false, false, false, false, 231, 232);
-CharStyle CURSOR(false, false, false, true, 220, 232);
-CharStyle SCOREBOARD(false, false, false, false, 231, 232);
-char CURSOR_CHAR = '>';
+CharStyle MENU_TEXT(false, false, false, false, 184, 234);
+CharStyle MENU_OPTION(false, false, false, false, 214, 234);
+CharStyle CURSOR(false, false, false, false, 202, 234);
+CharStyle SCOREBOARD(false, false, false, false, 231, 23);
+//Snake game style presets
+CharStyle SNAKE_BODY(false, false, false, false, 231, 233);
+CharStyle SNAKE_HEAD(false, false, false, false, 231, 233);
+CharStyle SNAKE_FOOD(false, false, false, false, 231, 233);
+CharStyle BARRIER(false, false, false, false, 231, 23);
 
-CharStyle SNAKE_BODY(false, false, false, false, 231, 232);
-CharStyle SNAKE_HEAD(false, false, false, false, 231, 232);
-CharStyle SNAKE_FOOD(false, false, false, false, 231, 232);
-CharStyle BARRIER(false, false, false, false, 231, 232);
+//************************************************************************************//
 
 /*
 Menu Class:
@@ -208,13 +209,31 @@ class Menu
       }
       return s_l;
     }
-    
-
 };
 
+//Function prototypes for menu navigation
+void intInputMenu(string text, Terminal& t, int& to_set);
+void boolInputMenu(string text, Terminal& t, bool& to_set);
+void charInputMenu(string text, Terminal& t, char& to_set);
+void styleInputMenu(string text, Terminal& t, CharStyle& to_edit);
+void pauseMenu(string text, Terminal& t, bool& game_state);
+void styleEditorMenu(Terminal &t);
+void settingsEditorMenu(Terminal &t);
+
+//************************************************************************************//
+
+/*
+The scoreboard class only maintains the thin 2 tall space above the game
+it keeps it populated with the current score and velocity of the snake
+*/
 class ScoreBoard
 {
   public:
+    /*
+    Constructor for scoreboard
+
+    Params: 1 Terminal Reference, 1 Highschore Reference
+    */
     ScoreBoard(Terminal& tin, int& hs) : t(tin), high_score(hs) {};
 
     void updateTerminal() {
@@ -222,6 +241,13 @@ class ScoreBoard
       return;
     }
 
+    /*
+    Increment the current score on the score board
+
+    Params: None
+
+    Returns: Void
+    */
     void scoreEvent(){
       current_score++;
       //A quick line that keeps track of the highest score in a session
@@ -229,6 +255,13 @@ class ScoreBoard
       return;
     }
 
+    /*
+    Sets the current speed to be displayed under the current speed section
+
+    Params: None
+
+    Returns: Void
+    */
     void setSpeed(int spd){
       current_speed = spd;
       return;
@@ -247,6 +280,13 @@ class ScoreBoard
     //Roughly centers the text and finds the left justification line
     const int left_justification_offset = -1*((score_prefix.size()+speed_prefix.size())/4);
 
+    /*
+    Pushed display array changes to the active Terminal
+
+    Params: None
+
+    Returns: Void
+    */
     void pushToTerminal()
     {
       string score_print = score_prefix+to_string(current_score);
@@ -270,14 +310,7 @@ class ScoreBoard
     
 };
 
-//Creates a menu to gather user input for settings purposes, prints a prompt
-void intInputMenu(string text, Terminal& t, int& to_set);
-void boolInputMenu(string text, Terminal& t, bool& to_set);
-void charInputMenu(string text, Terminal& t, char& to_set);
-void styleInputMenu(string text, Terminal& t, CharStyle& to_edit);
-void pauseMenu(string text, Terminal& t, bool& game_state);
-void styleEditorMenu(Terminal &t);
-void settingsEditorMenu(Terminal &t);
+//************************************************************************************//
 
 /*
     Snake Class:
@@ -412,6 +445,7 @@ ipair setBoundary(ipair screen_size)
   return {rows, columns};
 }
 
+//Function prototypes for snake game logic
 void playGame(Snake &snake, Terminal &t, ipair screensize, ScoreBoard& sb);
 void drawSnake();
 void displayHeader(Snake &snake, Terminal&t, ipair screensize);
@@ -452,6 +486,7 @@ struct Food
   }
 };
 
+//************************************************************************************//
 
 int main()
 {
@@ -460,6 +495,7 @@ int main()
   clear();
 
   //Input loop for confirming what display size the user wants
+  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
   ipair screen_size;
   while(true) {
     clear();
@@ -486,75 +522,78 @@ int main()
     //Break user-dimension input loop with current screen dimensions set
     if (input=='y'||input=='Y') break;
   }
+  //End of window size confirmation loop
+  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
 
-  //Create Terminal object of the correct size
-  Terminal t(screen_size.first, screen_size.second);
-  t.setCursorVisibility(false);
+  Terminal t(screen_size.first, screen_size.second); //Initalize a terminal instance
+  t.setCursorVisibility(false); //Disable cursor visibility
 
-  //Menu loop, after running it returns the selection as the number presented on the menu
-
-  vector<string> menu_options = {"PLAY", "SETTINGS", "EXIT"};
-
-  string cursor_control_line = "CURSOR CONTROLS: " + string(1, CURSOR_UP) + " TO MOVE UP AND " + string(1, CURSOR_DOWN) + " FOR DOWN";
-  vector<string> menu_text = {"", "", "USE ENTER TO CONFIRM SELECTION"};
-  menu_text[1] = cursor_control_line;
+  vector<string> menu_text = {"", "NAVIGATE UP & DOWN WITH 'w' & 's'", "PRESS ENTER TO SELECT AN OPTION"}; //Main menu header
+  vector<string> menu_options = {"PLAY", "SETTINGS", "EXIT"}; //Main menu options
 
   while(true){
-  if (HIGHEST_SCORE>0) menu_text[0]= ("HIGHEST SCORE: "+to_string(HIGHEST_SCORE));
-  Menu m(menu_text, menu_options, t);
-  //Signals the menu to run once regardless of whether there is input available
-  bool init_run = true;
-  int user_decision;
-  bool menu_active = true;
-  while (menu_active) {
-    if (init_run) {
-      m.updateTerminal();
-      t.draw();
-      init_run=false;
-    }
+    if (HIGHEST_SCORE>0) menu_text[0]= ("HIGHEST SCORE: "+to_string(HIGHEST_SCORE)); //Show highscore banner if there is a highscore
+    Menu m(menu_text, menu_options, t); //Initialize main menu
+
+    bool force_run = true; //forces the menu to render once
+    int user_decision; //Holds the chosen user decision from the menu
+    bool menu_active = true; //Exit trigger for main menu loop
+
+    //Main menu loop
+    while (menu_active) {
+      //Force run loop for initial render
+      if (force_run) {
+        m.updateTerminal();
+        t.draw();
+        force_run=false;
+      }
   
+    //Cursor navigation
+    switch (getInput()) {
+      case 'w': //cursor up
+        m.moveCursor(-1);
+        m.updateTerminal();
+        t.draw();
+        break;
+      case 's': //cursor down
+        m.moveCursor(1);
+        m.updateTerminal();
+        t.draw();
+        break;
+      case '\n': //chosen option
+        user_decision = m.getSelection(); //Assigned with users chosen option here
+        menu_active = false; //Exits the main menu loop
+        break;
+      }
+    }
 
-  switch (getInput()) {
-    case 'w':
-      m.moveCursor(-1);
-      m.updateTerminal();
-      t.draw();
+    //Snake initial setup 
+    ipair boundary = setBoundary(screen_size);
+    int startX = rand() % (boundary.first - 8) + 5;
+    int startY = rand() % (boundary.second - 8) + 5;
+    char startDirection = 'd';
+    Snake snake(startX, startY, startDirection);
+    ScoreBoard sb(t, HIGHEST_SCORE);
+
+    //Menu user_decision outcome switch
+    switch (user_decision)
+    {
+    case 1: //Start game loop
+      t.clearGrid();
+      playGame(snake, t, screen_size, sb);
       break;
-    case 's':
-      m.moveCursor(1);
-      m.updateTerminal();
-      t.draw();
+    case 2: //Open settings menu
+      settingsEditorMenu(t);
       break;
-    case '\n':
-      user_decision = m.getSelection();
-      menu_active = false;
+    case 3: //Exit the game
+      exit(0);
       break;
     }
-  }
-
-  ipair boundary = setBoundary(screen_size);
-  int startX = rand() % (boundary.first - 8) + 5;
-  int startY = rand() % (boundary.second - 8) + 5;
-  char startDirection = 'd';
-
-  Snake snake(startX, startY, startDirection);
-  ScoreBoard sb(t, HIGHEST_SCORE);
-
-  switch (user_decision)
-  {
-  case 1:
-    t.clearGrid();
-    playGame(snake, t, screen_size, sb);
-    break;
-  case 2:
-    settingsEditorMenu(t);
-    break;
-  case 3:
-    exit(0);
-    break;
-  }
   }
 }
+
+//Snake game logic
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
 
 // Changes grid based on size of screen, always square.
 void createGrid(ipair screen_size, Terminal &t)
@@ -568,7 +607,7 @@ void createGrid(ipair screen_size, Terminal &t)
   }
   for (int j = 0; j <= boundary.second; j++)
   {
-    t.setChar(3, j, GRID_BORDER);
+    t.setChar(3, j, GRID_BORDER, false, false, false, false, BARRIER.fg_color, BARRIER.bg_color);
     t.setChar(boundary.first, j, GRID_BORDER, BARRIER.bold, BARRIER.italic, BARRIER.underline, BARRIER.blinking, BARRIER.fg_color, BARRIER.bg_color);
   }
 
@@ -576,7 +615,7 @@ void createGrid(ipair screen_size, Terminal &t)
   {
     for (int j = 1; j < boundary.second; j++)
     {
-      t.setChar(i, j, ' ');
+      t.setChar(i, j, ' ', false, false, false, false, 0, SNAKE_BODY.bg_color);
     }
   }
 
@@ -626,7 +665,7 @@ void drawSnake(const Snake &snake, Terminal &t)
 
   // Erase the previous position of the tail segment
   ipair prevTailPos = snake.getPrevTailPos();
-  t.setChar(prevTailPos.first, prevTailPos.second, ' ');
+  t.setChar(prevTailPos.first, prevTailPos.second, ' ', false, false, false, false, 0, SNAKE_BODY.bg_color);
 
   // Draw the updated grid with the snake
   t.draw();
@@ -784,7 +823,10 @@ void playGame(Snake &snake, Terminal &t, ipair screen_size, ScoreBoard &sb)
   }
 }
 
-//menu functions
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
+
+//Function definitions used for menu navigation
+//Most of these are functionally identical
 void pauseMenu(string text, Terminal& t, bool& game_state)
 {
   vector<string> ts = {"GAME CURRENTLY PAUSED"};
