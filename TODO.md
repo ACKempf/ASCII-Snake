@@ -21,7 +21,7 @@
 - [x] Implement snake object
 - [x] Implement snake movement
 - [x] Implement snake growth
-- [ ] Implement food placement mechanics
+- [x] Implement food placement mechanics
 - [x] Implement food collision "eating" mechanics
 - [x] Implement wall collision "game-over" mechanics
 - [x] Implement self collision "game-over" mechanics
@@ -29,17 +29,17 @@
 ### 3. Implement QOL features
 - [x] Implement directional graphic for snake head
 - [ ] Implement possible "slithering" graphic effect for snake body using italic effect
-- [ ] Implement game margin and border
-- [ ] Implement score counter
-- [ ] Implement gameover restart screen
-- [ ] Implement cursor based main menu
+- [x] Implement game margin and border
+- [x] Implement score counter
+- [x] Implement gameover restart screen
+- [x] Implement cursor based main menu
 - [ ] Implement file to log and save high scores(?)
 - [ ] Implement method to browse high scores from menu
-- [ ] Implement settings menu
-- [ ] Implement pause functionality
+- [x] Implement settings menu
+- [x] Implement pause functionality
 
 ### 4. If there is time
-- [ ] Allow changing of core & graphics settings from settings menu
-- [ ] Allow changing of timing and control settings from the settings menu
+- [x] Allow changing of core & graphics settings from settings menu
+- [x] Allow changing of timing and control settings from the settings menu
 - [ ] Implement additional gameplay modes
 - [ ] Implement dynamically resizing the screen while playing
