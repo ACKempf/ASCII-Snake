@@ -34,6 +34,7 @@
   //Used for non-blocking input
   #include <poll.h>
   #include <thread>
+  #include <unistd.h>
 
   //A shorthand constant for the ANSI escape code on terminal
   const std::string ESC = "\033[";
