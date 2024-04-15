@@ -12,7 +12,7 @@ If the menu fails to print, typically this means the window is too small to acco
 
 ## Features
 ASCII snake aims to recreate the snake game with additional modes, and a high-level of customization. Using the in-game settings menu the 
-player is able to tweak the graphics, controls, and timing in any way they please. 
+player is able to tweak the graphics and timing in any way they please. 
 
 ## Requirements
 ASCII snake requires nothing other than a MACOS system with access to the terminal application
