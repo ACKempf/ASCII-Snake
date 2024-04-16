@@ -3,8 +3,8 @@
 * Date: 03/28/2024
 *
 * Description:
-* Header file that contains all of the classes and structures 
-* That are required to run the Snake game, the purpose of this
+* Header file that contains all of the classes, structures, and functions 
+* that are required to run the Snake game, the purpose of this
 * header file is to increase the readability and modularity of 
 * the snake game code. 
 */
