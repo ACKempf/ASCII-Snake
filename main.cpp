@@ -23,12 +23,29 @@ int main()
     static char input;
 
     //Simple printout instructing user
-    cout << "Adjust window to desired size and press any key to continue." << endl;
+    cout << "Adjust window to desired size and press any key to continue (Minimum 16x75)" << endl;
     //A "press any key to continue" break
     cin.ignore();
 
     //Reassign screen_size to current screen size
     screen_size = getTermSize();
+    while(screen_size.first < 16 || screen_size.second < 75){
+      clear();
+      cout << "Please readjust your screen size to be at least 16x75 (currently is: " << screen_size.first << "x" << screen_size.second << ")" << endl;
+      cout << "Adjust window to desired size and press any key to continue (Minimum 16x75)" << endl;
+      //A "press any key to continue" break
+      cin.ignore();
+      screen_size = getTermSize();
+    }
+    /*
+    while(screen_size.first < 24 || screen_size.second < 80){
+      cout << "Please make sure your screen dimensions are at least 24x80. (Current screen size: " << screen_size.first << "x" << screen_size.second << ")" << endl;
+      cout << "Adjust window to desired size and press any key to continue (Minumum 24x80)" << endl;
+      cin.ignore();
+      screen_size = getTermSize();
+    }
+    */
+
     //Trim off the unusable but represented top row of the screen space
     screen_size.first--;
 

@@ -3,8 +3,8 @@
 * Date: 03/28/2024
 *
 * Description:
-* Header file that contains all of the classes, structures, and functions 
-* that are required to run the Snake game, the purpose of this
+* Header file that contains all of the classes and structures 
+* That are required to run the Snake game, the purpose of this
 * header file is to increase the readability and modularity of 
 * the snake game code. 
 */
@@ -48,7 +48,7 @@ int HIGHEST_SCORE = 0; //Initialize highest score w/value 0
 bool ENABLE_POWERUPS = true;
 int POWERUP_TIME = 10;
 int POWERUP_SPAWN_TIME = 15;
-int SLOW_DOWN_POWERUP_INCREMENT = 2;
+int SLOW_MO_POWERUP_INCREMENT = 2;
 /*
 The CharStyle struct presents a cleaner way to store format presets
 */
@@ -468,7 +468,7 @@ public:
     checkSelfCollision Function:
     This function checks for self-collision of the snake, meaning if the snake's head collides with any
     part of its body. It takes the snake object as a parameter. It iterates through the snake's body
-    segments starting from the second segment and compares their coordinates with the head's coordinates.
+    segments (starting from the second segment) and compares the segment coordinates with the head's coordinates.
     If a match is found, indicating a collision, it returns true. Otherwise, it returns false, indicating
     no collision.
   */
@@ -664,7 +664,7 @@ struct Powerups
   */
   void activatePowerUp(int &game_speed, bool &SELF_COLLISION)
   {
-    if(type == 1) game_speed *= SLOW_DOWN_POWERUP_INCREMENT;
+    if(type == 1) game_speed *= SLOW_MO_POWERUP_INCREMENT;
     else if(type == 2) SELF_COLLISION = false;
     powerUpActive = true;
     powerUpActivationTime = time(NULL);
@@ -679,8 +679,8 @@ struct Powerups
   void deactivatePowerUp(int &game_speed, bool &SELF_COLLISION)
   {
     if(type == 1){
-      if(game_speed / SLOW_DOWN_POWERUP_INCREMENT > MAX_SPEED){
-        game_speed = int(game_speed / SLOW_DOWN_POWERUP_INCREMENT);
+      if(game_speed / SLOW_MO_POWERUP_INCREMENT > MAX_SPEED){
+        game_speed = int(game_speed / SLOW_MO_POWERUP_INCREMENT);
       }
       else game_speed = MAX_SPEED;
     }
@@ -697,7 +697,7 @@ struct Powerups
   }
   /*
     respawnPowerUpTimer: similar to powerUpExpired, subtracts time that power up was activated from the current time, checking to see if 
-    the result is grater than the amount of time the power up effect lasts, plus the designated amount of time in between respawns (so that way power ups spawn a certain amount of 
+    the result is greater than the amount of time the power up effect lasts, plus the designated amount of time in between respawns (so that way power ups spawn a certain amount of 
     time after the power up effect has worn off). Returns true if so, indicating that enough time has passed for a power up to spawn.
   */
   bool respawnPowerUpTimer() const {
@@ -1352,12 +1352,13 @@ void powerupEditorMenu(Terminal &t)
             boolInputMenu("ENABLE OR DISABLE POWERUPS SPAWNING IN THE GAME", t, ENABLE_POWERUPS);
             break;
           case 2:
-            intInputMenu("AMOUNT OF TIME (IN SECONDS) A POWERUP'S EFFECTS LAST", t, POWERUP_TIME);
+            intInputMenu("TIME (IN SECONDS) A POWERUP'S EFFECTS LAST", t, POWERUP_TIME);
+            break;
           case 3:
-            intInputMenu("AMOUNT OF TIME (IN SECONDS) IT TAKES FOR ANOTHER POWERUP TO SPAWN (AFTER THE PREVIOUS POWERUP EFFECTS ARE OVER)", t, SPEED_MULTIPLIER);
+            intInputMenu("TIME (IN SECONDS) BEFORE ANOTHER POWERUP SPAWNS", t, POWERUP_SPAWN_TIME);
             break;
           case 4:
-            boolInputMenu("#EXPERIMENTAL# RATIO OF CHANGE IN GAMESPEED FOR THE SLO-MO POWER UP (DEFAULT (2) HALVES THE GAMESPEED)", t, SELF_COLLISION);
+            intInputMenu("RATIO CHANGE IN GAMESPEED FOR THE SLO-MO POWER UP", t, SLOW_MO_POWERUP_INCREMENT);
             break;
         }
     }
